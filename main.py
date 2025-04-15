@@ -1,5 +1,4 @@
 import os
-import logger
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, Response
@@ -15,16 +14,16 @@ from google.oauth2.service_account import Credentials
 import gspread
 from datetime import datetime
 import random
-from schemas import QuizCreate
 import qrcode
 from io import BytesIO
-
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
+# Initialize database
+init_db()
 
 def get_db():
     logger.info(f"SessionLocal status: {SessionLocal}")
@@ -37,16 +36,15 @@ def get_db():
     finally:
         db.close()
 
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["http://localhost:3000", "https://quiz-frontend.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Google Sheets setup for Project A data
+# Google Sheets setup
 scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
 script_dir = os.path.dirname(os.path.abspath(__file__))
 creds_path = os.path.join(script_dir, "credentials.json")
@@ -58,12 +56,10 @@ spreadsheet = client.open_by_key("1Gic0RJBJNHReuj0n8jeQkDsaGV_c9X10i--_i2s2QMc")
 # Open QuizResults spreadsheet
 quiz_spreadsheet = client.open_by_key("10rPJkv4o9VSKlW5qObjav5FsDsvKLInmUBmofULCYcQ")
 
-
 # Pydantic models
 class StudentVerification(BaseModel):
     student_number: str
     course_number: str
-
 
 class ScoreCreate(BaseModel):
     user_id: str
@@ -71,19 +67,16 @@ class ScoreCreate(BaseModel):
     score: int
     total_questions: int
 
-
 class StudentData(BaseModel):
     firstName: str
     lastName: str
     studentNumber: str
-    courseNumber: str | None = None
-
+    courseNumber: Optional[str] = None
 
 class QuizSubmission(BaseModel):
     quiz_id: int
     answers: dict
     studentData: StudentData
-
 
 class QuestionCreate(BaseModel):
     question_text: str
@@ -94,12 +87,10 @@ class QuestionCreate(BaseModel):
     audio_url: str = ""
     video_url: str = ""
 
-
 class QuizCreate(BaseModel):
     title: str
     description: Optional[str] = None
     questions: list[QuestionCreate]
-
 
 class AnswerSubmission(BaseModel):
     student_number: str
@@ -108,17 +99,14 @@ class AnswerSubmission(BaseModel):
     course_number: str
     answers: dict
 
-
 class QuizUpdate(BaseModel):
-    title: str | None = None
-    description: str | None = None
-    questions: list[QuestionCreate] | None = None
-
+    title: Optional[str] = None
+    description: Optional[str] = None
+    questions: Optional[list[QuestionCreate]] = None
 
 # Log quiz submission to Google Sheets
 def log_quiz_submission(student_number: str, course_number: str, first_name: str, last_name: str, quiz_id: int,
                         quiz_title: str, score: int, total: int):
-    # Sanitize inputs
     student_number = str(student_number).strip().replace(',', '').replace('\n', '')
     course_number = str(course_number).strip().replace(',', '').replace('\n', '')
     first_name = str(first_name).strip().replace(',', '').replace('\n', '')
@@ -127,7 +115,6 @@ def log_quiz_submission(student_number: str, course_number: str, first_name: str
 
     try:
         master_sheet = spreadsheet.worksheet("Quiz Responses")
-        # Verify header
         expected_header = ["Timestamp", "Student Number", "Course Number", "First Name", "Last Name",
                            "Quiz ID", "Quiz Title", "Score", "Total Questions"]
         current_header = master_sheet.row_values(1)
@@ -159,9 +146,7 @@ def log_quiz_submission(student_number: str, course_number: str, first_name: str
     course_sheet.append_row(row)
     logging.info(f"Logged to course sheet {course_sheet_name}: {row}")
 
-
 def save_to_google_sheets(submission: AnswerSubmission, quiz_id: int, score: int, total: int):
-    # Sanitize inputs
     student_number = str(submission.student_number).strip().replace(',', '').replace('\n', '')
     first_name = str(submission.first_name_english).strip().replace(',', '').replace('\n', '')
     last_name = str(submission.last_name_english).strip().replace(',', '').replace('\n', '')
@@ -202,7 +187,6 @@ def save_to_google_sheets(submission: AnswerSubmission, quiz_id: int, score: int
     logging.info(f"Appending to Course_{course_sheet_name}: {row}")
     course_sheet.append_row(row)
 
-
 @app.post("/verify_student/")
 async def verify_student(data: StudentVerification):
     sheet = spreadsheet.sheet1
@@ -224,7 +208,6 @@ async def verify_student(data: StudentVerification):
     except Exception as e:
         logging.error(f"Error verifying student: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Verification failed: {str(e)}")
-
 
 @app.get("/proxy_media/")
 async def proxy_media(url: str):
@@ -254,13 +237,11 @@ async def proxy_media(url: str):
         logger.error(f"Failed to fetch media: {str(e)}")
         raise HTTPException(status_code=400, detail=f"Failed to fetch media: {str(e)}")
 
-
 @app.get("/quizzes/")
 def read_quizzes(db: Session = Depends(get_db)):
     quizzes = db.query(Quiz).all()
     return [{"id": q.id, "title": q.title, "description": q.description, "created_at": q.created_at.isoformat()} for q
             in quizzes]
-
 
 @app.get("/quiz/{quiz_id}")
 async def get_quiz(quiz_id: int, student_number: str, course_number: str, db: Session = Depends(get_db)):
@@ -322,7 +303,6 @@ async def get_quiz(quiz_id: int, student_number: str, course_number: str, db: Se
         "questions": question_data
     }
 
-
 @app.get("/quiz_details/{quiz_id}")
 def get_quiz_details(quiz_id: int, db: Session = Depends(get_db)):
     quiz = db.query(Quiz).filter(Quiz.id == quiz_id).first()
@@ -346,7 +326,6 @@ def get_quiz_details(quiz_id: int, db: Session = Depends(get_db)):
             } for q in questions
         ]
     }
-
 
 @app.put("/update_quiz/{quiz_id}")
 async def update_quiz(quiz_id: int, quiz: QuizCreate, db: Session = Depends(get_db)):
@@ -378,7 +357,6 @@ async def update_quiz(quiz_id: int, quiz: QuizCreate, db: Session = Depends(get_
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to update quiz: {str(e)}")
 
-
 @app.delete("/delete_quiz/{quiz_id}")
 async def delete_quiz(quiz_id: int, db: Session = Depends(get_db)):
     try:
@@ -397,7 +375,6 @@ async def delete_quiz(quiz_id: int, db: Session = Depends(get_db)):
         db.rollback()
         logger.error(f"Error deleting quiz: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to delete quiz: {str(e)}")
-
 
 @app.post("/submit_quiz/{quiz_id}")
 async def submit_quiz(quiz_id: int, submission: AnswerSubmission, db: Session = Depends(get_db)):
@@ -492,7 +469,6 @@ async def submit_quiz(quiz_id: int, submission: AnswerSubmission, db: Session = 
 
     return {"score": score, "total": total}
 
-
 @app.post("/add_quiz/")
 async def add_quiz(quiz: QuizCreate, db: Session = Depends(get_db)):
     try:
@@ -519,7 +495,6 @@ async def add_quiz(quiz: QuizCreate, db: Session = Depends(get_db)):
         logger.error(f"Error adding quiz: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to add quiz: {str(e)}")
 
-
 @app.get("/score/{user_id}/{quiz_id}")
 async def get_score(user_id: str, quiz_id: int, db: Session = Depends(get_db)):
     try:
@@ -532,7 +507,6 @@ async def get_score(user_id: str, quiz_id: int, db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
-
 @app.delete("/clear_scores/")
 def clear_scores(db: Session = Depends(get_db)):
     db.query(Score).delete()
@@ -542,22 +516,15 @@ def clear_scores(db: Session = Depends(get_db)):
 @app.get("/generate_qr/{quiz_id}/{course_number}")
 async def generate_qr(quiz_id: int, course_number: str, db: Session = Depends(get_db)):
     try:
-        # Verify quiz exists
         quiz = db.query(Quiz).filter(Quiz.id == quiz_id).first()
         if not quiz:
             raise HTTPException(status_code=404, detail="Quiz not found")
-
-        # Sanitize course_number
         course_number = course_number.strip().replace(',', '').replace('\n', '')
         if not course_number:
             raise HTTPException(status_code=400, detail="Invalid course number")
-
-        # Construct quiz URL
         base_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
         quiz_url = f"{base_url}/quiz?quizId={quiz_id}&courseNumber={course_number}"
         logger.info(f"Generating QR code for: {quiz_url}")
-
-        # Create QR code
         qr = qrcode.QRCode(
             version=1,
             error_correction=qrcode.constants.ERROR_CORRECT_L,
@@ -566,13 +533,10 @@ async def generate_qr(quiz_id: int, course_number: str, db: Session = Depends(ge
         )
         qr.add_data(quiz_url)
         qr.make(fit=True)
-
-        # Generate image
         img = qr.make_image(fill_color="black", back_color="white")
         buf = BytesIO()
         img.save(buf, format="PNG")
         buf.seek(0)
-
         return StreamingResponse(
             buf,
             media_type="image/png",
