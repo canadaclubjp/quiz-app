@@ -4,3 +4,5 @@ qrcode==8.0
 pillow==10.4.0
 sqlalchemy==2.0.35
 python-multipart==0.0.12
+gspread==6.1.2
+google-auth==2.35.0

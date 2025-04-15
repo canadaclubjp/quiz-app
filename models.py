@@ -1,32 +1,33 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
 import json
 from sqlalchemy.ext.declarative import declarative_base
+import datetime
 
 Base = declarative_base()
 
 class Quiz(Base):
     __tablename__ = "quizzes"
-    id = Column(Integer, primary_key=True)
-    title = Column(String)
-    description = Column(String)
-    created_at = Column(DateTime, nullable=False, server_default=func.now())  # Added
-    questions = relationship("Question", back_populates="quiz")
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String,  index=True)
+    description = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)  # Added
+
 
 class Question(Base):
     __tablename__ = "questions"
     id = Column(Integer, primary_key=True, index=True)
-    quiz_id = Column(Integer, ForeignKey("quizzes.id"), nullable=False)
-    question_text = Column(String)
-    options = Column(String)
-    correct_answers = Column(String)
-    is_text_input = Column(Boolean)
-    image_url = Column(String)
-    audio_url = Column(String)
-    video_url = Column(String)
-    quiz = relationship("Quiz", back_populates="questions")
+    quiz_id = Column(Integer, index=True)
+    question_text = Column(Text)
+    options = Column(Text, nullable=True)
+    correct_answers = Column(Text)
+    is_text_input = Column(Integer, default=0)
+    image_url = Column(String, nullable=True)
+    audio_url = Column(String, nullable=True)
+    video_url = Column(String, nullable=True)
+
 
 
     def get_options(self):
@@ -40,9 +41,9 @@ class Question(Base):
 
 class Score(Base):
     __tablename__ = "scores"
-    id = Column(Integer, primary_key=True)
-    student_number = Column(String)
-    quiz_id = Column(Integer, ForeignKey("quizzes.id"))
+    id = Column(Integer, primary_key=True, index=True)
+    student_number = Column(String, index=True)
+    quiz_id = Column(Integer, index=True)
     score = Column(Integer)
     total_questions = Column(Integer)
     first_name = Column(String)

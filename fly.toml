@@ -1,20 +1,28 @@
-# fly.toml app configuration file generated for quiz-university-naruto-tokushima on 2025-02-03T21:24:35+09:00
+# fly.toml app configuration file generated for quiz-app-backend-jp on 2025-04-14T22:04:47+09:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'quiz-university-naruto-tokushima'
+app = 'quiz-app-backend-jp'
 primary_region = 'nrt'
 
 [build]
+  dockerfile = 'Dockerfile'
+
+[env]
+  FRONTEND_URL = 'https://quiz-frontend.vercel.app'
+  PYTHON_VERSION = '3.9'
+
+[[mounts]]
+  source = 'quiz_data'
+  destination = '/app'
 
 [http_service]
-  internal_port = 3000
+  internal_port = 80
   force_https = true
-  auto_stop_machines = 'stop'
+  auto_stop_machines = true
   auto_start_machines = true
   min_machines_running = 0
-  processes = ['app']
 
 [[vm]]
   memory = '1gb'
