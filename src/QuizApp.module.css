@@ -1,0 +1,138 @@
+/* QuizApp.module.css */
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f4f6;
+  padding: 2rem;
+}
+
+.quizBox {
+  background-color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 600px;
+  border: 1px solid #e5e7eb;
+}
+
+.timerText {
+  font-size: 1.2rem;
+  color: #333; /* Default color (e.g., dark gray) */
+  margin-bottom: 10px;
+}
+
+.timerWarning {
+  color: #ff0000; /* Red text for urgency */
+  background-color: #ffe6e6; /* Light red background */
+  padding: 5px;
+  border-radius: 4px;
+  animation: pulse 1s infinite; /* Optional pulsing effect */
+}
+
+/* Optional animation for extra emphasis */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.title {
+  font-size: 1.8rem;
+  font-weight: bold;
+  text-align: center;
+  color: #1f2937;
+}
+
+.selectBox {
+  margin-top: 1rem;
+  padding: 0.5rem;
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background-color: #f9fafb;
+  color: #374151;
+}
+
+.loadingText {
+  color: #6b7280;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.quizContent {
+  margin-top: 1.5rem;
+}
+
+.quizTitle {
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-align: center;
+  color: #1f2937;
+}
+
+.quizDescription {
+  text-align: center;
+  color: #6b7280;
+  margin-bottom: 1rem;
+}
+
+.questionBox {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  background-color: #f3f4f6;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.questionText {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.optionLabel {
+  display: flex;
+  align-items: center;
+  margin-top: 0.5rem;
+  cursor: pointer;
+}
+
+.radioInput {
+  margin-right: 0.5rem;
+  width: 16px;
+  height: 16px;
+  accent-color: #2563eb;
+}
+
+.submitButton {
+  margin-top: 1.5rem;
+  width: 100%;
+  background-color: #2563eb;
+  color: white;
+  font-weight: bold;
+  padding: 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s ease-in-out;
+}
+
+.submitButton:hover {
+  background-color: #1d4ed8;
+}
+
+.scoreText {
+  margin-top: 1rem;
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-align: center;
+  color: #1f2937;
+}
+
+.media {
+  max-width: 100%;
+  margin: 10px 0;
+  display: block;
+}
