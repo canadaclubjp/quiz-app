@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 
 export default function QuizApp() {
     const [quiz, setQuiz] = useState(null);
@@ -30,7 +31,7 @@ export default function QuizApp() {
             setError("Please enter your student number, first name, last name, and ensure quiz parameters are provided.");
             return;
         }
-        const url = `http://localhost:8000/quiz/${parseInt(quizId)}?student_number=${studentNumber}&course_number=${courseNumber}`;
+        const url = `https://quiz-app-backend-jp.fly.dev/quiz/${parseInt(quizId)}?student_number=${studentNumber}&course_number=${courseNumber}`;
         try {
             const response = await fetch(url);
             if (!response.ok) {
@@ -92,38 +93,26 @@ export default function QuizApp() {
             setError("Student number, first name, and last name are required.");
             return;
         }
-        const submitUrl = `http://localhost:8000/submit_quiz/${parseInt(quizId)}`;
-        // Format answers for backend
-        const formattedAnswers = {};
-        Object.keys(answers).forEach((qId) => {
-            formattedAnswers[qId] = answers[qId];
-        });
+        const submitUrl = `https://quiz-app-backend-jp.fly.dev/submit_quiz/${parseInt(quizId)}`;
         const submission = {
             student_number: studentNumber,
             first_name_english: firstNameEnglish,
             last_name_english: lastNameEnglish,
             course_number: courseNumber,
-            answers: formattedAnswers
+            answers: Object.keys(answers).reduce((acc, qId) => {
+                acc[qId] =answers[qId];
+                return acc;
+            }, {})
         };
-        console.log("Submitting:", submission);
         try {
-            const response = await fetch(submitUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(submission)
-            });
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`HTTP error! status: ${response.status}, details: ${errorText}`);
-            }
-            const result = await response.json();
-            setScore(result.score);
-            setTotal(result.total);
+            const response = await axios.post(submitUrl, submission);
+            setScore(response.data.score);
+            setTotal(response.data.total);
             setSubmitted(true);
             setError(null);
         } catch (err) {
             console.error("Error submitting quiz:", err);
-            setError(err.message);
+            setError(err.response?.data?.detail || err.message);
         }
     };
 
@@ -233,7 +222,7 @@ export default function QuizApp() {
                                 <img
                                     src={
                                         q.image_url.includes("drive.google.com")
-                                            ? `http://localhost:8000/proxy_media/?url=${encodeURIComponent(q.image_url)}`
+                                            ? getDirectGoogleDriveUrl(q.image_url)
                                             : q.image_url
                                     }
                                     alt="Question media"
@@ -241,20 +230,13 @@ export default function QuizApp() {
                                 />
                             )}
                             {q.audio_url && (
-                                <audio
-                                    controls
-                                    onError={(e) => console.error("Audio element error:", e.target.error)}
-                                >
-                                    {console.log("Raw audio_url:", q.audio_url)}
-                                    {console.log(
-                                        "Computed src:",
-                                        q.audio_url.includes("drive.google.com") &&
-                                        !q.audio_url.includes("uc?export=download")
-                                            ? getDirectGoogleDriveUrl(q.audio_url)
-                                            : `http://localhost:8000/proxy_media/?url=${encodeURIComponent(q.audio_url)}`
-                                    )}
+                                <audio controls>
                                     <source
-                                        src={`http://localhost:8000/proxy_media/?url=${encodeURIComponent(q.audio_url)}`}
+                                        src={
+                                            q.audio_url.includes("drive.google.com")
+                                                ? getDirectGoogleDriveUrl(q.audio_url)
+                                                : q.audio_url
+                                        }
                                         type="audio/mpeg"
                                     />
                                     Your browser does not support the audio element.
@@ -266,7 +248,7 @@ export default function QuizApp() {
                                         src={
                                             q.video_url.includes("catbox.moe")
                                                 ? q.video_url
-                                                : `http://localhost:8000/proxy_media/?url=${encodeURIComponent(q.video_url)}`
+                                                : getDirectGoogleDriveUrl(q.video_url)
                                         }
                                     />
                                     Your browser does not support the video element.
