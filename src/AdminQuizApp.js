@@ -109,6 +109,13 @@ export default function AdminQuizApp() {
             setError(null);
         } catch (err) {
             console.error("Error deleting quiz:", err);
+            let errorMessage;
+            try {
+                const parsedError = JSON.parse(err.message);
+                errorMessage = parsedError.detail || err.message;
+            } catch {
+                errorMessage = err.message;
+            }
             setError(`Failed to delete quiz: ${errorMessage}`);
         }
     };
