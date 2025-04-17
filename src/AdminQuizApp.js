@@ -16,10 +16,8 @@ export default function AdminQuizApp() {
 
     const fetchQuizzes = async () => {
         try {
-            const response = await fetch("http://localhost:8000/quizzes/");
-            if (!response.ok) throw new Error("Failed to fetch quizzes");
-            const data = await response.json();
-            setQuizzes(data);
+            const response = await axios.get("https://quiz-app-backend-jp.fly.dev/quizzes/");
+            setQuizzes(response.data);
             setError(null);
         } catch (err) {
             console.error("Error fetching quizzes:", err);
@@ -34,12 +32,10 @@ export default function AdminQuizApp() {
     const fetchQuizDetails = async (quizId) => {
         if (!quizId) return;
         try {
-            const response = await fetch(`http://localhost:8000/quiz_details/${quizId}`);
-            if (!response.ok) throw new Error("Failed to fetch quiz details");
-            const data = await response.json();
-            setQuizTitle(data.title);
-            setQuizDescription(data.description);
-            setQuestions(data.questions.map(q => ({
+            const response = await axios.get(`https://quiz-app-backend-jp.fly.dev/quiz_details/${quizId}`);
+            setQuizTitle(response.data.title);
+            setQuizDescription(response.data.description);
+            setQuestions(response.data.questions.map(q => ({
                 questionText: q.question_text,
                 options: q.options.length ? q.options : [""],
                 correctAnswers: q.correct_answers,
@@ -79,20 +75,16 @@ export default function AdminQuizApp() {
             }))
         };
         console.log("Submitting quiz data:", quizData);
-        const url = editingQuizId ? `http://localhost:8000/update_quiz/${editingQuizId}` : "http://localhost:8000/add_quiz/";
+        const url = editingQuizId ? `https://quiz-app-backend-jp.fly.dev/update_quiz/${editingQuizId}` : "https://quiz-app-backend-jp.fly.dev/add_quiz/";
         const method = editingQuizId ? "PUT" : "POST";
 
         try {
-            const response = await fetch(url, {
+            const response = await axios({
                 method,
+                url,
+                data: quizData,
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(quizData)
             });
-            console.log("Response status:", response.status, "OK:", response.ok);
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Failed to ${editingQuizId ? "update" : "add"} quiz: ${errorText}`);
-            }
             resetForm();
             setShowQuizList(true);
             await fetchQuizzes();
@@ -110,24 +102,13 @@ export default function AdminQuizApp() {
         }
         if (!window.confirm("Are you sure you want to delete this quiz?")) return;
         try {
-            const response = await fetch(`http://localhost:8000/delete_quiz/${selectedQuizId}`, { method: "DELETE" });
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(errorText);
-            }
+            await axios.delete(`https://quiz-app-backend-jp.fly.dev/delete_quiz/${selectedQuizId}`);
             resetForm();
             setShowQuizList(true);
             await fetchQuizzes();
             setError(null);
         } catch (err) {
             console.error("Error deleting quiz:", err);
-            let errorMessage;
-            try {
-                const parsedError = JSON.parse(err.message);
-                errorMessage = parsedError.detail || err.message;
-            } catch {
-                errorMessage = err.message;
-            }
             setError(`Failed to delete quiz: ${errorMessage}`);
         }
     };
@@ -142,7 +123,7 @@ export default function AdminQuizApp() {
             setError("Invalid course number.");
             return;
         }
-        const url = `http://localhost:3000/quiz?quizId=${selectedQuizId}&courseNumber=${cleanCourseNumber}`;
+        const url = `https://quiz-frontend-frontend.vercel.app/quiz?quizId=${selectedQuizId}&courseNumber=${cleanCourseNumber}`;
         setQuizUrl(url);
         navigator.clipboard.writeText(url);
         alert(`URL copied to clipboard: ${url}`);
@@ -158,7 +139,8 @@ export default function AdminQuizApp() {
             setError("Invalid course number.");
             return;
         }
-        const qrUrl = `http://localhost:8000/generate_qr/${selectedQuizId}/${cleanCourseNumber}`;
+        const qrUrl = `https://quiz-app-backend-jp.fly.dev/generate_qr/${selectedQuizId}/${cleanCourseNumber}`;
+        axios.get(qrUrl, { responseType: 'blob' })
         axios.get(qrUrl, { responseType: 'blob' })
             .then(response => {
                 const blob = new Blob([response.data], { type: 'image/png' });
