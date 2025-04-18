@@ -373,13 +373,30 @@ export default function AdminQuizApp() {
             {editingQuizId && (
                 <div className="share-section">
                     <h3>Share Quiz</h3>
-                    <input
-                        type="text"
-                        placeholder="Enter Course Number (e.g., 0012323)"
+                    <select
                         value={courseNumber}
                         onChange={(e) => setCourseNumber(e.target.value)}
-                        style={{ width: "50%", padding: "8px", marginBottom: "10px", borderRadius: "4px", border: "1px solid #dadce0" }}
-                    />
+                        style={{ marginBottom: "10px", width: "200px", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
+                    >
+                        <option value="">Select Course Number</option>
+                        <option value="0012141">0012141</option>
+                        <option value="0012150">0012150</option>
+                        <option value="0012159">0012159</option>
+                        <option value="0012206">0012206</option>
+                        <option value="0012305">0012305</option>
+                        <option value="0012313">0012313</option>
+                        <option value="0012323">0012323</option>
+                        <option value="0022211">0022211</option>
+                        <option value="0022239">0022239</option>
+                        <option value="0022248">0022248</option>
+                        <option value="0022304">0022304</option>
+                        <option value="0022326">0022326</option>
+                        <option value="0022330">0022330</option>
+                        <option value="05050010">05050010</option>
+                        <option value="05050020">05050020</option>
+                        <option value="05050030">05050030</option>
+                        <option value="05050040">05050040</option>
+                    </select>
                     <div style={{ marginBottom: "10px" }}>
                         <button onClick={generateQuizUrl}>Generate URL</button>
                         <button onClick={downloadQRCode}>Download QR Code</button>
