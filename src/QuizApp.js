@@ -267,20 +267,19 @@ export default function QuizApp() {
                                     }}
                                 />
                             ) : (
-                                <div>
+                                <div style={{ textAlign: "left" }}>
                                     {q.options.map((opt, index) => {
                                         const cleanOpt = opt.includes(": ")
                                             ? opt.split(": ")[1].trim()
                                             : opt.trim();
                                         return (
                                             <label
-                                                key={index}
-                                                style={{ display: "block", margin: "5px 0" }}
-                                            >
+                                                key={index} style={{ display: "block", margin: "5px 0", paddingLeft: "10px" }}>
                                                 <input
                                                     type="checkbox"
                                                     checked={answers[q.id]?.includes(cleanOpt) || false}
                                                     onChange={() => handleCheckbox(q.id, opt)}
+                                                    style={{ marginRight: "10px" }}
                                                 />
                                                 {opt}
                                             </label>
