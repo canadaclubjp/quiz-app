@@ -33,30 +33,25 @@ export default function QuizApp() {
         }
         const url = `https://quiz-app-backend-jp.fly.dev/quiz/${parseInt(quizId)}?student_number=${studentNumber}&course_number=${courseNumber}`;
         try {
-            const response = await fetch(url);
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`HTTP error! status: ${response.status}, details: ${errorText}`);
-            }
-            const data = await response.json();
-            if (data.message === "You have already taken this quiz.") {
+            const response = await axios.get(url);
+            if (response.data.message === "You have already taken this quiz.") {
                 setSubmitted(true);
-                setScore(data.score);
-                setTotal(data.total);
+                setScore(response.data.score);
+                setTotal(response.data.total);
                 setIsStudentIdEntered(true);
                 setQuiz({ title: "Quiz Already Taken" });
                 return;
             }
-            setQuiz(data);
+            setQuiz(response.data);
             setIsStudentIdEntered(true);
             setError(null);
 
-            const hasAudioOrVideo = data.questions.some((q) => q.audio_url || q.video_url);
+            const hasAudioOrVideo = response.data.questions.some((q) => q.audio_url || q.video_url);
             const initialTime = hasAudioOrVideo ? 10 * 60 : 5 * 60;
             setTimeLeft(initialTime);
         } catch (err) {
             console.error("Error fetching quiz:", err);
-            setError(err.message);
+            setError(err.response?.data?.detail || err.message);
         }
     };
 
@@ -100,7 +95,7 @@ export default function QuizApp() {
             last_name_english: lastNameEnglish,
             course_number: courseNumber,
             answers: Object.keys(answers).reduce((acc, qId) => {
-                acc[qId] =answers[qId];
+                acc[qId] = answers[qId];
                 return acc;
             }, {})
         };
@@ -142,13 +137,7 @@ export default function QuizApp() {
                     value={studentNumber}
                     onChange={(e) => setStudentNumber(e.target.value)}
                     required
-                    style={{
-                        marginBottom: "10px",
-                        width: "200px",
-                        padding: "8px",
-                        borderRadius: "4px",
-                        border: "1px solid #ccc",
-                    }}
+                    style={{ marginBottom: "10px", width: "200px", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
                 />
                 <input
                     type="text"
@@ -156,13 +145,7 @@ export default function QuizApp() {
                     value={firstNameEnglish}
                     onChange={(e) => setFirstNameEnglish(e.target.value)}
                     required
-                    style={{
-                        marginBottom: "10px",
-                        width: "200px",
-                        padding: "8px",
-                        borderRadius: "4px",
-                        border: "1px solid #ccc",
-                    }}
+                    style={{ marginBottom: "10px", width: "200px", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
                 />
                 <input
                     type="text"
@@ -170,25 +153,11 @@ export default function QuizApp() {
                     value={lastNameEnglish}
                     onChange={(e) => setLastNameEnglish(e.target.value)}
                     required
-                    style={{
-                        marginBottom: "10px",
-                        width: "200px",
-                        padding: "8px",
-                        borderRadius: "4px",
-                        border: "1px solid #ccc",
-                    }}
+                    style={{ marginBottom: "10px", width: "200px", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
                 />
                 <button
                     onClick={fetchQuiz}
-                    style={{
-                        width: "200px",
-                        padding: "8px",
-                        backgroundColor: "#4CAF50",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                    }}
+                    style={{ width: "200px", padding: "8px", backgroundColor: "#4CAF50", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}
                 >
                     Start Quiz
                 </button>
@@ -207,16 +176,7 @@ export default function QuizApp() {
                         Time Left: {formatTime(timeLeft)}
                     </div>
                     {quiz.questions.map((q) => (
-                        <div
-                            key={q.id}
-                            style={{
-                                border: "1px solid #ccc",
-                                padding: "10px",
-                                marginBottom: "10px",
-                                width: "100%",
-                                maxWidth: "600px",
-                            }}
-                        >
+                        <div key={q.id} style={{ border: "1px solid #ccc", padding: "10px", marginBottom: "10px", width: "100%", maxWidth: "600px" }}>
                             <h3>{q.question_text}</h3>
                             {q.image_url && (
                                 <img
@@ -259,22 +219,14 @@ export default function QuizApp() {
                                     type="text"
                                     value={answers[q.id] || ""}
                                     onChange={(e) => handleTextInput(q.id, e.target.value)}
-                                    style={{
-                                        width: "100%",
-                                        padding: "8px",
-                                        borderRadius: "4px",
-                                        border: "1px solid #ccc",
-                                    }}
+                                    style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
                                 />
                             ) : (
                                 <div style={{ textAlign: "left" }}>
                                     {q.options.map((opt, index) => {
-                                        const cleanOpt = opt.includes(": ")
-                                            ? opt.split(": ")[1].trim()
-                                            : opt.trim();
+                                        const cleanOpt = opt.includes(": ") ? opt.split(": ")[1].trim() : opt.trim();
                                         return (
-                                            <label
-                                                key={index} style={{ display: "block", margin: "5px 0", paddingLeft: "10px" }}>
+                                            <label key={index} style={{ display: "block", margin: "5px 0", paddingLeft: "10px" }}>
                                                 <input
                                                     type="checkbox"
                                                     checked={answers[q.id]?.includes(cleanOpt) || false}
@@ -291,14 +243,7 @@ export default function QuizApp() {
                     ))}
                     <button
                         onClick={submitQuiz}
-                        style={{
-                            padding: "8px 16px",
-                            backgroundColor: "#4CAF50",
-                            color: "white",
-                            border: "none",
-                            borderRadius: "4px",
-                            cursor: "pointer",
-                        }}
+                        style={{ padding: "8px 16px", backgroundColor: "#4CAF50", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}
                     >
                         Submit Quiz
                     </button>
@@ -306,9 +251,7 @@ export default function QuizApp() {
             ) : (
                 <div style={{ textAlign: "center" }}>
                     <h2>Quiz Submitted!</h2>
-                    <p>
-                        Your score: {score}/{total}
-                    </p>
+                    <p>Your score: {score}/{total}</p>
                 </div>
             )}
         </div>
