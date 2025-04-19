@@ -129,7 +129,7 @@ export default function QuizApp() {
 
     if (!isStudentIdEntered) {
         return (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "20px" }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", padding: "20px" }}>
                 <h1>Enter Student Information</h1>
                 <input
                     type="text"
@@ -222,18 +222,18 @@ export default function QuizApp() {
                                     style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
                                 />
                             ) : (
-                                <div style={{ textAlign: "left" }}>
+                                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
                                     {q.options.map((opt, index) => {
                                         const cleanOpt = opt.includes(": ") ? opt.split(": ")[1].trim() : opt.trim();
                                         return (
-                                            <label key={index} style={{ display: "block", margin: "5px 0", paddingLeft: "10px" }}>
+                                            <label key={index} style={{ display: "flex", alignItems: "center", margin: "5px 0", width: "100%" }}>
                                                 <input
                                                     type="checkbox"
                                                     checked={answers[q.id]?.includes(cleanOpt) || false}
                                                     onChange={() => handleCheckbox(q.id, opt)}
-                                                    style={{ marginRight: "10px" }}
+                                                    style={{ marginRight: "10px", flexShrink: 0 }}
                                                 />
-                                                {opt}
+                                                <span style={{ flexGrow: 1 }}>{opt}</span>
                                             </label>
                                         );
                                     })}
