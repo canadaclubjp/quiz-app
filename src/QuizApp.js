@@ -239,13 +239,15 @@ export default function QuizApp() {
                                         console.log(`Option ${index} - Raw: ${opt}, Display: ${displayValue}`);
                                         return (
                                             <div key={index} className="choice-item">
-                                                <input
-                                                    type="checkbox"
-                                                    id={`option-${q.id}-${index}`}
-                                                    checked={answers[q.id]?.includes(cleanValue) || false}
-                                                    onChange={() => handleCheckbox(q.id, opt)}
-                                                />
-                                                <label htmlFor={`option-${q.id}-${index}`}>
+                                                <div className="choice-label">
+                                                    <input
+                                                        type="checkbox"
+                                                        id={`option-${q.id}-${index}`}
+                                                        checked={answers[q.id]?.includes(cleanValue) || false}
+                                                        onChange={() => handleCheckbox(q.id, opt)}
+                                                    />
+                                                </div>
+                                                <label htmlFor={`option-${q.id}-${index}`} className="choice-text">
                                                     {displayValue}
                                                 </label>
                                             </div>

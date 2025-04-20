@@ -47,7 +47,7 @@
   max-width: 600px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   text-align: left;
-  box-sizing: border-box; /* Ensure padding doesn't cause overflow */
+  box-sizing: border-box;
 }
 
 .choices {
@@ -58,22 +58,27 @@
 .choice-item {
   display: flex;
   align-items: center;
-  gap: 10px;
   margin-bottom: 10px;
   width: 100%;
-  box-sizing: border-box; /* Prevent overflow */
+  box-sizing: border-box;
 }
 
-.choice-item input[type="checkbox"] {
+.choice-label {
+  margin-right: 10px;
+  display: inline-flex; /* Keep checkbox inline with the label */
+  align-items: center;
+}
+
+.choice-label input[type="checkbox"] {
   margin: 0;
 }
 
-.choice-item label {
-  margin: 0;
+.choice-text {
   font-size: 16px;
   text-align: left;
-  word-wrap: break-word; /* Ensure long text wraps within the container */
+  word-wrap: break-word;
   max-width: calc(100% - 30px); /* Account for checkbox width */
+  display: inline-block; /* Ensure text stays inline with checkbox */
 }
 
 .text-input {
@@ -142,7 +147,7 @@
     margin-bottom: 8px;
   }
 
-  .choice-item label {
+  .choice-text {
     font-size: 14px;
   }
 
@@ -182,7 +187,7 @@
     padding: 8px;
   }
 
-  .choice-item label {
+  .choice-text {
     font-size: 12px;
   }
 
