@@ -4,7 +4,7 @@
   padding: 20px;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: center; /* This centers the question blocks, but we'll override for choices */
 }
 
 .signin-container {
@@ -48,7 +48,10 @@
   width: 100%;
   max-width: 600px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  text-align: left; /* Ensure content starts from the left */
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Ensure content inside question-block aligns to the left */
 }
 
 .choices {
@@ -56,12 +59,15 @@
   flex-direction: column;
   gap: 10px;
   margin-top: 10px;
+  width: 100%; /* Ensure choices take full width of question-block */
+  align-items: flex-start; /* Align choices to the left */
 }
 
 .choice-item {
   display: flex;
   align-items: center;
   gap: 10px;
+  width: 100%; /* Ensure each choice item takes full width */
 }
 
 .choice-item input[type="checkbox"] {
