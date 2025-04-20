@@ -76,7 +76,7 @@ export default function QuizApp() {
     };
 
     const handleCheckbox = (questionId, value) => {
-        const cleanValue = value.trim();
+        const cleanValue = value.includes(": ") ? value.split(": ")[1].trim() : value.trim();
         console.log(`Q${questionId} - Checkbox: Raw=${value}, Clean=${cleanValue}`);
         setAnswers((prev) => {
             const currentAnswers = Array.isArray(prev[questionId]) ? prev[questionId] : [];
@@ -234,7 +234,8 @@ export default function QuizApp() {
                             ) : (
                                 <div className="choices">
                                     {q.options.map((opt, index) => {
-                                        const cleanValue = opt.trim();
+                                        const displayValue = opt.includes(": ") ? opt.split(": ")[1].trim() : opt.trim();
+                                        const cleanValue = displayValue;
                                         return (
                                             <div key={index} className="choice-item">
                                                 <input
@@ -244,7 +245,7 @@ export default function QuizApp() {
                                                     onChange={() => handleCheckbox(q.id, opt)}
                                                 />
                                                 <label htmlFor={`option-${q.id}-${index}`}>
-                                                    {cleanValue}
+                                                    {displayValue}
                                                 </label>
                                             </div>
                                         );
