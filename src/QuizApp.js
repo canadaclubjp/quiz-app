@@ -134,7 +134,7 @@ export default function QuizApp() {
     };
 
     const getDirectGoogleDriveUrl = (url) => {
-        const fileIdMatch = url.match(/\/d\/([a-zAZ0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+        const fileIdMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
         if (fileIdMatch) {
             return `https://drive.google.com/uc?export=download&id=${fileIdMatch[1]}`;
         }
@@ -176,93 +176,93 @@ export default function QuizApp() {
         );
     }
 
-if (!quiz) return <div className="loading">Loading...</div>;
+    if (!quiz) return <div className="loading">Loading...</div>;
 
-return (
-    <div className="quiz-container">
-        <h1>{quiz.title}</h1>
-        {!submitted ? (
-            <>
-                <div className="timer">
-                    Time Left: {formatTime(timeLeft)}
-                </div>
-                {quiz.questions.map((q) => (
-                    <div key={q.id} className="question-block">
-                        <h3>{q.question_text}</h3>
-                        {q.image_url && (
-                            <img
-                                src={
-                                    q.image_url.includes("drive.google.com")
-                                        ? `https://quiz-app-backend-jp.fly.dev/proxy_media/?url=${encodeURIComponent(q.image_url)}`
-                                        : q.image_url
-                                }
-                                alt="Question media"
-                                className="media"
-                            />
-                        )}
-                        {q.audio_url && (
-                            <audio
-                                controls
-                                onError={(e) => console.error("Audio element error:", e.target.error)}
-                            >
-                                <source
-                                    src={`https://quiz-app-backend-jp.fly.dev/proxy_media/?url=${encodeURIComponent(q.audio_url)}`}
-                                    type="audio/mpeg"
-                                />
-                                Your browser does not support the audio element.
-                            </audio>
-                        )}
-                        {q.video_url && (
-                            <video controls className="media">
-                                <source
-                                    src={
-                                        q.video_url.includes("catbox.moe")
-                                            ? q.video_url
-                                            : `https://quiz-app-backend-jp.fly.dev/proxy_media/?url=${encodeURIComponent(q.video_url)}`
-                                    }
-                                />
-                                Your browser does not support the video element.
-                            </video>
-                        )}
-                        {q.is_text_input ? (
-                            <input
-                                type="text"
-                                value={answers[q.id] || ""}
-                                onChange={(e) => handleTextInput(q.id, e.target.value)}
-                                className="text-input"
-                            />
-                        ) : (
-                            <div className="choices">
-                                {q.options.map((opt, index) => {
-                                    const displayValue = opt.includes(": ") ? opt.split(": ")[1].trim() : opt.trim();
-                                    const cleanValue = displayValue;
-                                    console.log(`Option ${index} - Raw: ${opt}, Display: ${displayValue}`);
-                                    return (
-                                        <div key={index} className="choice-item">
-                                            <input
-                                                type="checkbox"
-                                                id={`option-${q.id}-${index}`}
-                                                checked={answers[q.id]?.includes(cleanValue) || false}
-                                                onChange={() => handleCheckbox(q.id, opt)}
-                                            />
-                                            <label htmlFor={`option-${q.id}-${index}`}>
-                                                {displayValue}
-                                            </label>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
+    return (
+        <div className="quiz-container">
+            <h1>{quiz.title}</h1>
+            {!submitted ? (
+                <>
+                    <div className="timer">
+                        Time Left: {formatTime(timeLeft)}
                     </div>
-                ))}
-                <button onClick={submitQuiz} className="submit-button">Submit Quiz</button>
-            </>
-        ) : (
-            <div className="result">
-                <h2>Quiz Submitted!</h2>
-                <p>Your score: {score}/{total}</p>
-            </div>
-        )}
-    </div>
-);
+                    {quiz.questions.map((q) => (
+                        <div key={q.id} className="question-block">
+                            <h3>{q.question_text}</h3>
+                            {q.image_url && (
+                                <img
+                                    src={
+                                        q.image_url.includes("drive.google.com")
+                                            ? `https://quiz-app-backend-jp.fly.dev/proxy_media/?url=${encodeURIComponent(q.image_url)}`
+                                            : q.image_url
+                                    }
+                                    alt="Question media"
+                                    className="media"
+                                />
+                            )}
+                            {q.audio_url && (
+                                <audio
+                                    controls
+                                    onError={(e) => console.error("Audio element error:", e.target.error)}
+                                >
+                                    <source
+                                        src={`https://quiz-app-backend-jp.fly.dev/proxy_media/?url=${encodeURIComponent(q.audio_url)}`}
+                                        type="audio/mpeg"
+                                    />
+                                    Your browser does not support the audio element.
+                                </audio>
+                            )}
+                            {q.video_url && (
+                                <video controls className="media">
+                                    <source
+                                        src={
+                                            q.video_url.includes("catbox.moe")
+                                                ? q.video_url
+                                                : `https://quiz-app-backend-jp.fly.dev/proxy_media/?url=${encodeURIComponent(q.video_url)}`
+                                        }
+                                    />
+                                    Your browser does not support the video element.
+                                </video>
+                            )}
+                            {q.is_text_input ? (
+                                <input
+                                    type="text"
+                                    value={answers[q.id] || ""}
+                                    onChange={(e) => handleTextInput(q.id, e.target.value)}
+                                    className="text-input"
+                                />
+                            ) : (
+                                <div className="choices">
+                                    {q.options.map((opt, index) => {
+                                        const displayValue = opt.includes(": ") ? opt.split(": ")[1].trim() : opt.trim();
+                                        const cleanValue = displayValue;
+                                        console.log(`Option ${index} - Raw: ${opt}, Display: ${displayValue}`);
+                                        return (
+                                            <div key={index} className="choice-item">
+                                                <input
+                                                    type="checkbox"
+                                                    id={`option-${q.id}-${index}`}
+                                                    checked={answers[q.id]?.includes(cleanValue) || false}
+                                                    onChange={() => handleCheckbox(q.id, opt)}
+                                                />
+                                                <label htmlFor={`option-${q.id}-${index}`}>
+                                                    {displayValue}
+                                                </label>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                    <button onClick={submitQuiz} className="submit-button">Submit Quiz</button>
+                </>
+            ) : (
+                <div className="result">
+                    <h2>Quiz Submitted!</h2>
+                    <p>Your score: {score}/{total}</p>
+                </div>
+            )}
+        </div>
+    );
 }

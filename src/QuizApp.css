@@ -4,7 +4,7 @@
   padding: 20px;
   display: flex;
   flex-direction: column;
-  align-items: center; /* This centers the question blocks, but we'll override for choices */
+  align-items: flex-start; /* Align all children (question blocks) to the left */
 }
 
 .signin-container {
@@ -59,15 +59,17 @@
   flex-direction: column;
   gap: 10px;
   margin-top: 10px;
-  width: 100%; /* Ensure choices take full width of question-block */
+  width: 100%;
   align-items: flex-start; /* Align choices to the left */
+  justify-content: flex-start; /* Ensure vertical alignment starts from the left */
 }
 
 .choice-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  width: 100%; /* Ensure each choice item takes full width */
+  width: 100%;
+  justify-content: flex-start; /* Ensure checkbox and label are aligned to the left */
 }
 
 .choice-item input[type="checkbox"] {
@@ -96,6 +98,7 @@
   margin-bottom: 20px;
   font-size: 18px;
   font-weight: bold;
+  align-self: flex-start; /* Align timer to the left */
 }
 
 .submit-button {
@@ -106,20 +109,21 @@
   border-radius: 4px;
   cursor: pointer;
   font-size: 16px;
+  align-self: flex-start; /* Align submit button to the left */
 }
 
 .result {
-  text-align: center;
+  text-align: left; /* Align result text to the left */
 }
 
 .error {
-  text-align: center;
+  text-align: left;
   color: red;
   padding: 20px;
 }
 
 .loading {
-  text-align: center;
+  text-align: left;
   padding: 20px;
 }
 
