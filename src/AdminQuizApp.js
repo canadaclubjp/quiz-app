@@ -3,7 +3,7 @@ import axios from "axios";
 import "./AdminQuizApp.css";
 
 export default function AdminQuizApp() {
-    const [quizzes, setQuizzes] = useState([]);
+    const [quizzes, setQuizzes] = useState([]); // Initialize as an empty array
     const [selectedQuizId, setSelectedQuizId] = useState("");
     const [quizTitle, setQuizTitle] = useState("");
     const [quizDescription, setQuizDescription] = useState("");
@@ -16,14 +16,15 @@ export default function AdminQuizApp() {
 
     const fetchQuizzes = async () => {
         try {
-            const response = await fetch("http://localhost:8000/quizzes/");
-            if (!response.ok) throw new Error("Failed to fetch quizzes");
-            const data = await response.json();
+            const response = await axios.get("https://quiz-app-backend-jp.fly.dev/quizzes/");
+            // Ensure response.data is an array; if not, set to empty array
+            const data = Array.isArray(response.data) ? response.data : [];
             setQuizzes(data);
             setError(null);
         } catch (err) {
             console.error("Error fetching quizzes:", err);
             setError(err.message);
+            setQuizzes([]); // Reset to empty array on error
         }
     };
 
@@ -34,12 +35,10 @@ export default function AdminQuizApp() {
     const fetchQuizDetails = async (quizId) => {
         if (!quizId) return;
         try {
-            const response = await fetch(`http://localhost:8000/quiz_details/${quizId}`);
-            if (!response.ok) throw new Error("Failed to fetch quiz details");
-            const data = await response.json();
-            setQuizTitle(data.title);
-            setQuizDescription(data.description);
-            setQuestions(data.questions.map(q => ({
+            const response = await axios.get(`https://quiz-app-backend-jp.fly.dev/quiz_details/${quizId}`);
+            setQuizTitle(response.data.title);
+            setQuizDescription(response.data.description);
+            setQuestions(response.data.questions.map(q => ({
                 questionText: q.question_text,
                 options: q.options.length ? q.options : [""],
                 correctAnswers: q.correct_answers,
@@ -78,21 +77,19 @@ export default function AdminQuizApp() {
                 video_url: q.videoUrl || ""
             }))
         };
-        console.log("Submitting quiz data:", quizData);
-        const url = editingQuizId ? `http://localhost:8000/update_quiz/${editingQuizId}` : "http://localhost:8000/add_quiz/";
+        // Fix the URL selection using a proper ternary operator
+        const url = editingQuizId
+            ? `https://quiz-app-backend-jp.fly.dev/update_quiz/${editingQuizId}`
+            : "https://quiz-app-backend-jp.fly.dev/add_quiz/";
         const method = editingQuizId ? "PUT" : "POST";
 
         try {
-            const response = await fetch(url, {
+            const response = await axios({
                 method,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(quizData)
+                url,
+                data: quizData,
+                headers: { "Content-Type": "application/json" }
             });
-            console.log("Response status:", response.status, "OK:", response.ok);
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Failed to ${editingQuizId ? "update" : "add"} quiz: ${errorText}`);
-            }
             resetForm();
             setShowQuizList(true);
             await fetchQuizzes();
@@ -110,25 +107,14 @@ export default function AdminQuizApp() {
         }
         if (!window.confirm("Are you sure you want to delete this quiz?")) return;
         try {
-            const response = await fetch(`http://localhost:8000/delete_quiz/${selectedQuizId}`, { method: "DELETE" });
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(errorText);
-            }
+            await axios.delete(`https://quiz-app-backend-jp.fly.dev/delete_quiz/${selectedQuizId}`);
             resetForm();
             setShowQuizList(true);
             await fetchQuizzes();
             setError(null);
         } catch (err) {
             console.error("Error deleting quiz:", err);
-            let errorMessage;
-            try {
-                const parsedError = JSON.parse(err.message);
-                errorMessage = parsedError.detail || err.message;
-            } catch {
-                errorMessage = err.message;
-            }
-            setError(`Failed to delete quiz: ${errorMessage}`);
+            setError(`Failed to delete quiz: ${err.message}`); // Fix error message
         }
     };
 
@@ -142,7 +128,7 @@ export default function AdminQuizApp() {
             setError("Invalid course number.");
             return;
         }
-        const url = `http://localhost:3000/quiz?quizId=${selectedQuizId}&courseNumber=${cleanCourseNumber}`;
+        const url = `https://quiz-frontend-frontend.vercel.app/quiz?quizId=${selectedQuizId}&courseNumber=${cleanCourseNumber}`;
         setQuizUrl(url);
         navigator.clipboard.writeText(url);
         alert(`URL copied to clipboard: ${url}`);
@@ -158,7 +144,7 @@ export default function AdminQuizApp() {
             setError("Invalid course number.");
             return;
         }
-        const qrUrl = `http://localhost:8000/generate_qr/${selectedQuizId}/${cleanCourseNumber}`;
+        const qrUrl = `https://quiz-app-backend-jp.fly.dev/generate_qr/${selectedQuizId}/${cleanCourseNumber}`;
         axios.get(qrUrl, { responseType: 'blob' })
             .then(response => {
                 const blob = new Blob([response.data], { type: 'image/png' });
@@ -212,6 +198,7 @@ export default function AdminQuizApp() {
         return (
             <div className="admin-container">
                 <h1 style={{ fontSize: "24px", color: "#202124" }}>Your Quizzes</h1>
+                {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
                 <button
                     onClick={() => {
                         setShowQuizList(false);
@@ -223,19 +210,23 @@ export default function AdminQuizApp() {
                     Create New Quiz
                 </button>
                 <ul className="quiz-list">
-                    {quizzes.map(quiz => (
-                        <li key={quiz.id}>
-                            <a
-                                onClick={() => {
-                                    setShowQuizList(false);
-                                    setSelectedQuizId(quiz.id);
-                                    fetchQuizDetails(quiz.id);
-                                }}
-                            >
-                                {`${quiz.id} - ${quiz.title} - ${new Date(quiz.created_at).toLocaleDateString()}`}
-                            </a>
-                        </li>
-                    ))}
+                    {quizzes.length === 0 ? (
+                        <li>No quizzes available.</li>
+                    ) : (
+                        quizzes.map(quiz => (
+                            <li key={quiz.id}>
+                                <a
+                                    onClick={() => {
+                                        setShowQuizList(false);
+                                        setSelectedQuizId(quiz.id);
+                                        fetchQuizDetails(quiz.id);
+                                    }}
+                                >
+                                    {`${quiz.id} - ${quiz.title} - ${new Date(quiz.created_at).toLocaleDateString()}`}
+                                </a>
+                            </li>
+                        ))
+                    )}
                 </ul>
             </div>
         );
@@ -401,7 +392,7 @@ export default function AdminQuizApp() {
                                 Generated URL: <a href={quizUrl} target="_blank" rel="noopener noreferrer">{quizUrl}</a>
                             </p>
                             <img
-                                src={`http://localhost:8000/generate_qr/${selectedQuizId}/${courseNumber.trim().replace(/[^0-9]/g, '')}`}
+                                src={`https://quiz-app-backend-jp.fly.dev/generate_qr/${selectedQuizId}/${courseNumber.trim().replace(/[^0-9]/g, '')}`}
                                 alt={`QR Code for Quiz ${selectedQuizId}`}
                                 className="qr-code"
                             />

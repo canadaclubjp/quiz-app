@@ -1,4 +1,5 @@
 import os
+import logging
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, Response
@@ -7,7 +8,6 @@ from sqlalchemy.orm import Session
 from database import SessionLocal, engine, init_db, Base
 from models import Quiz, Question, Score
 from pydantic import BaseModel
-import logging
 import json
 from typing import List, Optional
 from google.oauth2.service_account import Credentials
@@ -16,14 +16,76 @@ from datetime import datetime
 import random
 import qrcode
 from io import BytesIO
+import time
+import backoff
+from gspread.exceptions import APIError
+import pytz
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI()
+logger.info("Starting main.py import")
 
-# Initialize database
-init_db()
+# Google Sheets setup
+try:
+    logger.info("Loading credentials.json")
+    scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    creds_path = os.path.join(os.path.dirname(__file__), "credentials.json")
+    logger.info(f"Credentials path: {creds_path}")
+    creds = Credentials.from_service_account_file(creds_path, scopes=scope)
+    logger.info("Credentials loaded")
+    client = gspread.authorize(creds)
+    logger.info("Google client authorized")
+except Exception as e:
+    logger.error(f"Failed to load Google credentials: {str(e)}")
+    raise
+
+# Open StudentData spreadsheet
+try:
+    logger.info("Opening StudentData spreadsheet")
+    @backoff.on_exception(backoff.expo, APIError, max_tries=5, giveup=lambda e: e.response.status_code not in [429, 503])
+    def open_student_data():
+        return client.open_by_key("1Gic0RJBJNHReuj0n8jeQkDsaGV_c9X10i--_i2s2QMc")
+    spreadsheet = open_student_data()
+    logger.info("StudentData spreadsheet opened")
+except Exception as e:
+    logger.error(f"Failed to open StudentData spreadsheet: {str(e)}")
+    raise
+
+# Open QuizResults spreadsheet
+try:
+    logger.info("Opening QuizResults spreadsheet")
+    @backoff.on_exception(backoff.expo, APIError, max_tries=5, giveup=lambda e: e.response.status_code not in [429, 503])
+    def open_quiz_results():
+        return client.open_by_key("10rPJkv4o9VSKlW5qObjav5FsDsvKLInmUBmofULCYcQ")
+    quiz_spreadsheet = open_quiz_results()
+    logger.info("QuizResults spreadsheet opened")
+except Exception as e:
+    logger.error(f"Failed to open QuizResults spreadsheet: {str(e)}")
+    raise
+
+logger.info("Initializing database")
+try:
+    init_db()
+    logger.info("Database initialized")
+except Exception as e:
+    logger.error(f"Failed to initialize database: {str(e)}")
+    raise
+
+app = FastAPI()
+logger.info("FastAPI app created")
+
+# Rest of main.py (unchanged)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://quiz-frontend-frontend.vercel.app",
+                   "http://localhost:3000",
+                   "https://*.ngrok-free.app",],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS", "DELETE", "PUT", "PATCH"],
+    allow_headers=["Content-Type", "Authorization"],
+)
 
 def get_db():
     logger.info(f"SessionLocal status: {SessionLocal}")
@@ -35,26 +97,6 @@ def get_db():
         yield db
     finally:
         db.close()
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:3000", "https://quiz-frontend.vercel.app"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Google Sheets setup
-scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-script_dir = os.path.dirname(os.path.abspath(__file__))
-creds_path = os.path.join(script_dir, "credentials.json")
-creds = Credentials.from_service_account_file(creds_path, scopes=scope)
-client = gspread.authorize(creds)
-
-# Open StudentData spreadsheet
-spreadsheet = client.open_by_key("1Gic0RJBJNHReuj0n8jeQkDsaGV_c9X10i--_i2s2QMc")
-# Open QuizResults spreadsheet
-quiz_spreadsheet = client.open_by_key("10rPJkv4o9VSKlW5qObjav5FsDsvKLInmUBmofULCYcQ")
 
 # Pydantic models
 class StudentVerification(BaseModel):
@@ -124,7 +166,9 @@ def log_quiz_submission(student_number: str, course_number: str, first_name: str
         master_sheet = spreadsheet.add_worksheet(title="Quiz Responses", rows=100, cols=10)
         master_sheet.append_row(expected_header)
 
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    # Use JST timezone for timestamp
+    jst_timezone = pytz.timezone('Asia/Tokyo')
+    timestamp = datetime.now(jst_timezone).strftime("%Y-%m-%d %H:%M:%S")
     row = [timestamp, student_number, course_number, first_name, last_name,
            str(quiz_id), quiz_title, str(score), str(total)]
     logging.info(f"Appending to Quiz Responses: {row}")
@@ -152,7 +196,9 @@ def save_to_google_sheets(submission: AnswerSubmission, quiz_id: int, score: int
     last_name = str(submission.last_name_english).strip().replace(',', '').replace('\n', '')
     course_number = str(submission.course_number).strip().replace(',', '').replace('\n', '')
 
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    # Use JST timezone for timestamp
+    jst_timezone = pytz.timezone('Asia/Tokyo')
+    timestamp = datetime.now(jst_timezone).strftime("%Y-%m-%d %H:%M:%S")
     normalized_course = course_number.lstrip('0')
     answers_str = json.dumps(submission.answers)
     row = [timestamp, student_number, first_name, last_name, normalized_course,
@@ -238,10 +284,9 @@ async def proxy_media(url: str):
         raise HTTPException(status_code=400, detail=f"Failed to fetch media: {str(e)}")
 
 @app.get("/quizzes/")
-def read_quizzes(db: Session = Depends(get_db)):
+async def read_quizzes(db: Session = Depends(get_db)):
     quizzes = db.query(Quiz).all()
-    return [{"id": q.id, "title": q.title, "description": q.description, "created_at": q.created_at.isoformat()} for q
-            in quizzes]
+    return [{"id": q.id, "title": q.title, "description": q.description, "created_at": q.created_at.isoformat()} for q in quizzes]
 
 @app.get("/quiz/{quiz_id}")
 async def get_quiz(quiz_id: int, student_number: str, course_number: str, db: Session = Depends(get_db)):
@@ -421,6 +466,17 @@ async def submit_quiz(quiz_id: int, submission: AnswerSubmission, db: Session = 
         correct = json.loads(q.correct_answers) if q.correct_answers else []
         student_answer = submission.answers.get(str(q.id), [])
         logging.info(f"Q{q.id}: Student answer raw={student_answer}, Correct={correct}")
+
+        # Strip prefixes (e.g., "A:", "D:") from both student answers and correct answers
+        def strip_prefix(answer):
+            if isinstance(answer, str):
+                return answer.split(": ", 1)[-1].strip() if ": " in answer else answer.strip()
+            return answer
+
+        # Process correct answers
+        correct_cleaned = [strip_prefix(ans) for ans in correct]
+        logging.info(f"Q{q.id}: Correct cleaned={correct_cleaned}")
+
         if q.is_text_input:
             if isinstance(student_answer, str):
                 student_answer = student_answer
@@ -428,13 +484,15 @@ async def submit_quiz(quiz_id: int, submission: AnswerSubmission, db: Session = 
                 student_answer = student_answer[0]
             else:
                 student_answer = ""
-            logging.info(f"Q{q.id}: Processed text answer='{student_answer}'")
-            if student_answer.strip().lower() in [ans.strip().lower() for ans in correct]:
+            student_answer_cleaned = strip_prefix(student_answer)
+            logging.info(f"Q{q.id}: Processed text answer='{student_answer_cleaned}'")
+            if student_answer_cleaned.lower() in [ans.lower() for ans in correct_cleaned]:
                 score += 1
         else:
             student_answer = student_answer if isinstance(student_answer, list) else []
-            logging.info(f"Q{q.id}: Processed MC answer={student_answer}")
-            if set(student_answer) == set(correct):
+            student_answer_cleaned = [strip_prefix(ans) for ans in student_answer]
+            logging.info(f"Q{q.id}: Processed MC answer={student_answer_cleaned}")
+            if set(student_answer_cleaned) == set(correct_cleaned):
                 score += 1
 
     try:
@@ -474,6 +532,7 @@ async def add_quiz(quiz: QuizCreate, db: Session = Depends(get_db)):
     try:
         db_quiz = Quiz(title=quiz.title, description=quiz.description)
         db.add(db_quiz)
+        db.commit()
         db.flush()
         for q in quiz.questions:
             db_question = Question(
@@ -522,7 +581,7 @@ async def generate_qr(quiz_id: int, course_number: str, db: Session = Depends(ge
         course_number = course_number.strip().replace(',', '').replace('\n', '')
         if not course_number:
             raise HTTPException(status_code=400, detail="Invalid course number")
-        base_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+        base_url = "https://quiz-frontend-frontend.vercel.app"
         quiz_url = f"{base_url}/quiz?quizId={quiz_id}&courseNumber={course_number}"
         logger.info(f"Generating QR code for: {quiz_url}")
         qr = qrcode.QRCode(

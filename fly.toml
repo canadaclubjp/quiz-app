@@ -7,15 +7,12 @@ app = 'quiz-app-backend-jp'
 primary_region = 'nrt'
 
 [build]
-  dockerfile = 'Dockerfile'
+  builder = "paketobuildpacks/builder:base"
 
 [env]
   FRONTEND_URL = 'https://quiz-frontend.vercel.app'
   PYTHON_VERSION = '3.9'
 
-[[mounts]]
-  source = 'quiz_data'
-  destination = '/app'
 
 [http_service]
   internal_port = 80
@@ -28,3 +25,10 @@ primary_region = 'nrt'
   memory = '1gb'
   cpu_kind = 'shared'
   cpus = 1
+
+[mounts]
+  source = "quiz_data"
+  destination = "/app"
+
+[processes]
+  app = "/app/start.sh"
