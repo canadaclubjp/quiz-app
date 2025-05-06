@@ -7,7 +7,7 @@ app = "quiz-app-backend-jp"
 primary_region = "nrt"
 
 [build]
-  builder = "paketobuildpacks/builder:base"
+  dockerfile = "Dockerfile"
 
 [http_service]
   internal_port = 80
@@ -15,11 +15,7 @@ primary_region = "nrt"
   auto_stop_machines = true
   auto_start_machines = true
   min_machines_running = 0
-  processes = ["app"]  # Link the process to the http_service
 
-[mounts]
-  source = "quiz_data"
-  destination = "/app"
-
-[processes]
-  app = "/app/start.sh"  # Define the command to run
+#[mounts]
+#  source = "quiz_data"
+#  destination = "/app"
