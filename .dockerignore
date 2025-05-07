@@ -5,6 +5,12 @@ __pycache__
 .venv/
 venv/
 node_modules/
+build/
+dist/
+.git
+.gitignore
+.idea/
+.venv/**/*
 src/
 public/
 package.json
