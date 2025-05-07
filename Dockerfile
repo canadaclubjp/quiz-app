@@ -8,7 +8,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y sqlite3 && rm -rf /var/lib/apt/lists/*
 
 # Copy all project files (including main.py, quiz.db, start.sh, etc.)
-COPY . .
+COPY ./start.sh /app/start.sh
 
 RUN pip install --no-cache-dir -r requirements.txt
 
