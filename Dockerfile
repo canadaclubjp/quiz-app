@@ -8,9 +8,8 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y sqlite3 && rm -rf /var/lib/apt/lists/*
 
 # Copy all project files (including main.py, quiz.db, start.sh, etc.)
-COPY ./start.sh /app/start.sh
 
-COPY ./requirements.txt /app/requirements.txt
+COPY . .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -20,9 +19,6 @@ RUN chmod +x /app/start.sh
 
 # Make port 80 available
 EXPOSE 80
-
-# Debug: List files before running start.sh
-RUN ls -l /app
 
 # Run the app using start.sh
 CMD ["app/start.sh"]
