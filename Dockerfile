@@ -21,4 +21,6 @@ RUN chmod +x /app/start.sh
 EXPOSE 80
 
 # Run the app using start.sh
-CMD ["app/start.sh"]
+#CMD ["app/start.sh"]
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", 80]
