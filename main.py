@@ -1,5 +1,3 @@
-import os
-import logging
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, Response
@@ -20,6 +18,7 @@ import time
 import backoff
 from gspread.exceptions import APIError
 import pytz
+import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -76,7 +75,20 @@ except Exception as e:
 app = FastAPI()
 logger.info("FastAPI app created")
 
-# Rest of main.py (unchanged)
+# Add root route
+@app.get("/")
+async def read_root():
+    return {"message": "Welcome to the Quiz App API", "available_endpoints": [
+        "/quizzes/",
+        "/quiz/{quiz_id}",
+        "/verify_student/",
+        "/submit_quiz/{quiz_id}",
+        "/add_quiz/",
+        "/score/{user_id}/{quiz_id}",
+        "/generate_qr/{quiz_id}/{course_number}"
+    ]}
+
+# Rest of your existing code (CORS, get_db, models, etc.) remains unchanged
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://quiz-frontend-frontend.vercel.app",
@@ -221,11 +233,11 @@ def save_to_google_sheets(submission: AnswerSubmission, quiz_id: int, score: int
 
     course_sheet_name = f"Course_{normalized_course}"
     try:
-        course_sheet = quiz_spreadsheet.worksheet(course_sheet_name)
-        current_header = course_sheet.row_values(1)
-        if current_header != expected_header:
-            logging.warning(
-                f"Course_{course_sheet_name} header mismatch: expected={expected_header}, found={current_header}")
+      course_sheet = quiz_spreadsheet.worksheet(course_sheet_name)
+      current_header = course_sheet.row_values(1)
+      if current_header != expected_header:
+          logging.warning(
+              f"Course_{course_sheet_name} header mismatch: expected={expected_header}, found={current_header}")
     except gspread.exceptions.WorksheetNotFound:
         course_sheet = quiz_spreadsheet.add_worksheet(title=course_sheet_name, rows=100, cols=9)
         course_sheet.append_row(expected_header)
