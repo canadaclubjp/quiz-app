@@ -1,4 +1,5 @@
 import os
+import logging
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, Response
@@ -16,10 +17,11 @@ import random
 import qrcode
 from io import BytesIO
 import time
-import backoff
 from gspread.exceptions import APIError
-import pytz
+import backoff
 import logging
+import pytz
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
