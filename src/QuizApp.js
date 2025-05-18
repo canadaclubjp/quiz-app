@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import './QuizApp.css?v=4';  //Force rebuild
+import './QuizApp.css?';  //Force rebuild
 
 export default function QuizApp() {
     const [quiz, setQuiz] = useState(null);

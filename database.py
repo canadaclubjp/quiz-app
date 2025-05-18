@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 import os
 
 # Use environment variable for local development vs. Fly.io deployment
-DATABASE_PATH = os.getenv("DATABASE_PATH", "/app/quiz.db")  # Default to /app/quiz.db on Fly.io
+DATABASE_PATH = os.getenv("DATABASE_PATH", "/data/quiz.db")  # Default to /app/quiz.db on Fly.io
 SQLALCHEMY_DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})

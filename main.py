@@ -21,7 +21,7 @@ from gspread.exceptions import APIError
 import backoff
 import logging
 import pytz
-
+import uvicorn  # Add uvicorn import for running the app
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -94,12 +94,10 @@ async def read_root():
 # Rest of your existing code (CORS, get_db, models, etc.) remains unchanged
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://quiz-frontend-frontend.vercel.app",
-                   "http://localhost:3000",
-                   "https://*.ngrok-free.app",],
+    allow_origins=["https://quiz-frontend-frontend.vercel.app"],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS", "DELETE", "PUT", "PATCH"],
-    allow_headers=["Content-Type", "Authorization"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 def get_db():
@@ -301,7 +299,9 @@ async def proxy_media(url: str):
 @app.get("/quizzes/")
 async def read_quizzes(db: Session = Depends(get_db)):
     quizzes = db.query(Quiz).all()
-    return [{"id": q.id, "title": q.title, "description": q.description, "created_at": q.created_at.isoformat()} for q in quizzes]
+    return [{"id": q.id, "title": q.title, "description": q.description, "created_at": (q.created_at.strftime('%Y-%m-%d %H:%M:%S') if isinstance(q.created_at, datetime)
+                else str(q.created_at).replace('T', ' ').replace('Z', '')
+            )} for q in quizzes]
 
 @app.get("/quiz/{quiz_id}")
 async def get_quiz(quiz_id: int, student_number: str, course_number: str, db: Session = Depends(get_db)):
@@ -338,8 +338,9 @@ async def get_quiz(quiz_id: int, student_number: str, course_number: str, db: Se
     if existing_score:
         return {"message": "You have already taken this quiz.", "score": existing_score.score,
                 "total": existing_score.total_questions}
-
+    logger.info(f"Querying questions for quiz {quiz_id}")
     questions = db.query(Question).filter(Question.quiz_id == quiz_id).all()
+    logger.info(f"Raw questions from DB: {questions}")
     question_data = []
 
     for q in questions:
@@ -357,6 +358,7 @@ async def get_quiz(quiz_id: int, student_number: str, course_number: str, db: Se
             "audio_url": q.audio_url,
             "video_url": q.video_url
         })
+    logger.info(f"Processed question data: {question_data}")
     return {
         "id": quiz.id,
         "title": quiz.title,
@@ -545,10 +547,21 @@ async def submit_quiz(quiz_id: int, submission: AnswerSubmission, db: Session = 
 @app.post("/add_quiz/")
 async def add_quiz(quiz: QuizCreate, db: Session = Depends(get_db)):
     try:
+        # Validate input
+        if not quiz.questions:
+            raise HTTPException(status_code=400, detail="Quiz must have at least one question")
+        for q in quiz.questions:
+            if not q.correct_answers:
+                raise HTTPException(status_code=400, detail="Each question must have at least one correct answer")
+            if q.options and len(q.options) < 2:
+                raise HTTPException(status_code=400, detail="Multiple-choice questions must have at least two options")
+
+        # Create quiz but don't commit yet
         db_quiz = Quiz(title=quiz.title, description=quiz.description)
         db.add(db_quiz)
-        db.commit()
-        db.flush()
+        db.flush()  # Flush to get the quiz ID, but don't commit
+
+        # Add questions
         for q in quiz.questions:
             db_question = Question(
                 quiz_id=db_quiz.id,
@@ -561,7 +574,10 @@ async def add_quiz(quiz: QuizCreate, db: Session = Depends(get_db)):
                 video_url=q.video_url
             )
             db.add(db_question)
+
+        # Commit everything at once
         db.commit()
+        db.refresh(db_quiz)
         logger.info(f"Quiz added successfully: {db_quiz.id}")
         return {"message": "Quiz added successfully", "quiz_id": db_quiz.id}
     except Exception as e:
@@ -621,3 +637,7 @@ async def generate_qr(quiz_id: int, course_number: str, db: Session = Depends(ge
     except Exception as e:
         logger.error(f"Failed to generate QR code: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to generate QR code: {str(e)}")
+
+# Run the FastAPI app with uvicorn on 0.0.0.0:80
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=80)
