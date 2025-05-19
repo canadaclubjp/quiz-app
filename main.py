@@ -23,6 +23,7 @@ import logging
 import pytz
 import uvicorn  # Add uvicorn import for running the app
 
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -30,13 +31,22 @@ logger.info("Starting main.py import")
 
 # Google Sheets setup
 try:
-    logger.info("Loading credentials.json")
+    logger.info("Loading credentials from environment variable")
     scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    creds_path = os.path.join(os.path.dirname(__file__), "credentials.json")
-    logger.info(f"Credentials path: {creds_path}")
-    creds = Credentials.from_service_account_file(creds_path, scopes=scope)
+    # Get the credentials JSON string from the environment variable
+    creds_json_str = os.environ.get("REACT_APP_GOOGLE_CREDENTIALS")
+    if not creds_json_str:
+        raise ValueError("REACT_APP_GOOGLE_CREDENTIALS environment variable not set")
+
+    # Parse the JSON string into a dictionary
+    creds_info = json.loads(creds_json_str)
+    logger.info("Credentials JSON parsed")
+
+    # Load credentials from the dictionary
+    creds = Credentials.from_service_account_info(creds_info, scopes=scope)
     logger.info("Credentials loaded")
+
+    # Authorize the Google client
     client = gspread.authorize(creds)
     logger.info("Google client authorized")
 except Exception as e:
@@ -509,7 +519,7 @@ async def submit_quiz(quiz_id: int, submission: AnswerSubmission, db: Session = 
             student_answer = student_answer if isinstance(student_answer, list) else []
             student_answer_cleaned = [strip_prefix(ans) for ans in student_answer]
             logging.info(f"Q{q.id}: Processed MC answer={student_answer_cleaned}")
-            if set(student_answer_cleaned) == set(correct_cleaned):
+            if any(ans in correct_cleaned for ans in student_answer_cleaned):
                 score += 1
 
     try:
