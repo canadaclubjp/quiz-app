@@ -39,4 +39,4 @@ yarn-error.log*
 !quizzes.db
 
 # Allow credentials if needed
-!credentials.json  # Uncomment if your app needs credentials.json
+#!credentials.json  # Uncomment if your app needs credentials.json
