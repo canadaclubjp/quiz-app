@@ -519,7 +519,7 @@ async def submit_quiz(quiz_id: int, submission: AnswerSubmission, db: Session = 
             student_answer = student_answer if isinstance(student_answer, list) else []
             student_answer_cleaned = [strip_prefix(ans) for ans in student_answer]
             logging.info(f"Q{q.id}: Processed MC answer={student_answer_cleaned}")
-            if any(ans in correct_cleaned for ans in student_answer_cleaned):
+            if any(ans in correct_cleaned for ans in student_answer_cleaned):   # at least one correct
                 score += 1
 
     try:

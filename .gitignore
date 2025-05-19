@@ -37,6 +37,3 @@ yarn-error.log*
 # Allow specific database files
 !quiz.db
 !quizzes.db
-
-# Allow credentials if needed
-#!credentials.json  # Uncomment if your app needs credentials.json
