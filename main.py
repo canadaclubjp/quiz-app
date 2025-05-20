@@ -448,7 +448,7 @@ async def delete_quiz(quiz_id: int, db: Session = Depends(get_db)):
         logger.error(f"Error deleting quiz: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to delete quiz: {str(e)}")
 
-@app.post("/submit_quiz/{quiz_id}")
+@app.post("/submit_quiz/{quiz_id}")  # scoring endpoint
 async def submit_quiz(quiz_id: int, submission: AnswerSubmission, db: Session = Depends(get_db)):
     sheet = spreadsheet.sheet1
     try:
@@ -497,7 +497,10 @@ async def submit_quiz(quiz_id: int, submission: AnswerSubmission, db: Session = 
         # Strip prefixes (e.g., "A:", "D:") from both student answers and correct answers
         def strip_prefix(answer):
             if isinstance(answer, str):
-                return answer.split(": ", 1)[-1].strip() if ": " in answer else answer.strip()
+                for sep in [": ", ":"]:
+                    if sep in answer:
+                        return answer.split(sep, 1)[-1].strip()
+                return answer.strip()
             return answer
 
         # Process correct answers

@@ -76,7 +76,7 @@ export default function QuizApp() {
     };
 
     const handleCheckbox = (questionId, value) => {
-        const cleanValue = value.trim();
+        const cleanValue = value.split(": ", 1).length > 1 ? value.split(": ", 2)[1].trim() : value.trim();
         console.log(`Q${questionId} - Checkbox: Raw=${value}, Clean=${cleanValue}`);
         setAnswers((prev) => {
             const currentAnswers = Array.isArray(prev[questionId]) ? prev[questionId] : [];
