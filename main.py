@@ -28,6 +28,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 logger.info("Starting main.py import")
+logging.info(f"Credentials check: {os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')}")
+
 
 # Google Sheets setup
 try:
@@ -89,6 +91,12 @@ app = FastAPI()
 logger.info("FastAPI app created")
 
 # Add root route
+
+@app.get("/test-log")  # Use this temporarily to test logging
+async def test_log():
+    logger.info("Test log endpoint triggered")
+    return {"message": "Logged"}
+
 @app.get("/")
 async def read_root():
     return {"message": "Welcome to the Quiz App API", "available_endpoints": [
