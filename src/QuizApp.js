@@ -179,7 +179,7 @@ export default function QuizApp() {
     if (!quiz) return <div className="loading">Loading...</div>;
 
     return (
-        <div className="quiz-container">
+        <div className="quiz-container">  //
             <h1>{quiz.title}</h1>
             {!submitted ? (
                 <>
