@@ -5,7 +5,7 @@
   padding: 20px;
   box-sizing: border-box;
   overflow: auto;
-  background-color: #E6E6FA; /* Added light lavender background */
+  background-color: #E6E6FA !important; /* Added light lavender background */
 }
 
 .signin-container {
