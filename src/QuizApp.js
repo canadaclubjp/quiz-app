@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import "./QuizApp.css"
 
 export default function QuizApp() {
     const [quiz, setQuiz] = useState(null);
@@ -145,7 +146,7 @@ export default function QuizApp() {
 
     if (!isStudentIdEntered) {
         return (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "20px" }}>
+            <div className="quiz-container">
                 <h1>Enter Student Information</h1>
                 <input
                     type="text"
@@ -210,7 +211,7 @@ export default function QuizApp() {
     if (!quiz) return <div style={{ textAlign: "center" }}>Loading...</div>;
 
     return (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "20px" }}>
+        <div className="quiz-container">
             <h1 style={{ marginBottom: "20px" }}>{quiz.title}</h1>
             {!submitted ? (
                 <>
