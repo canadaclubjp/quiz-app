@@ -264,6 +264,13 @@ def save_to_google_sheets(submission: AnswerSubmission, quiz_id: int, score: int
     logging.info(f"Appending to Course_{course_sheet_name}: {row}")
     course_sheet.append_row(row)
 
+
+@app.get("/test-log")
+async def test_log():
+    logger.info("Test log endpoint triggered")
+    return {"message": "Logged"}
+
+
 @app.post("/verify_student/")
 async def verify_student(data: StudentVerification):
     sheet = spreadsheet.sheet1
