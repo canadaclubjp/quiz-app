@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from "react";  //
-import './QuizApp.css?';  //Force rebuild
+import React, { useState, useEffect } from "react";
 
 export default function QuizApp() {
     const [quiz, setQuiz] = useState(null);
@@ -31,7 +30,7 @@ export default function QuizApp() {
             setError("Please enter your student number, first name, last name, and ensure quiz parameters are provided.");
             return;
         }
-        const url = `https://quiz-app-backend-jp.fly.dev/quiz/${parseInt(quizId)}?student_number=${studentNumber}&course_number=${courseNumber}`;
+        const url = `http://localhost:8000/quiz/${parseInt(quizId)}?student_number=${studentNumber}&course_number=${courseNumber}`;
         try {
             const response = await fetch(url);
             if (!response.ok) {
@@ -76,7 +75,7 @@ export default function QuizApp() {
     };
 
     const handleCheckbox = (questionId, value) => {
-        const cleanValue = value.split(": ", 1).length > 1 ? value.split(": ", 2)[1].trim() : value.trim();
+        const cleanValue = value.includes(": ") ? value.split(": ")[1].trim() : value.trim();
         console.log(`Q${questionId} - Checkbox: Raw=${value}, Clean=${cleanValue}`);
         setAnswers((prev) => {
             const currentAnswers = Array.isArray(prev[questionId]) ? prev[questionId] : [];
@@ -93,7 +92,8 @@ export default function QuizApp() {
             setError("Student number, first name, and last name are required.");
             return;
         }
-        const submitUrl = `https://quiz-app-backend-jp.fly.dev/submit_quiz/${parseInt(quizId)}`;
+        const submitUrl = `http://localhost:8000/submit_quiz/${parseInt(quizId)}`;
+        // Format answers for backend
         const formattedAnswers = {};
         Object.keys(answers).forEach((qId) => {
             formattedAnswers[qId] = answers[qId];
@@ -141,11 +141,11 @@ export default function QuizApp() {
         return url;
     };
 
-    if (error) return <div className="error">Error: {error}</div>;
+    if (error) return <div style={{ textAlign: "center", color: "red" }}>Error: {error}</div>;
 
     if (!isStudentIdEntered) {
         return (
-            <div className="signin-container">
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "20px" }}>
                 <h1>Enter Student Information</h1>
                 <input
                     type="text"
@@ -153,7 +153,13 @@ export default function QuizApp() {
                     value={studentNumber}
                     onChange={(e) => setStudentNumber(e.target.value)}
                     required
-                    className="signin-input"
+                    style={{
+                        marginBottom: "10px",
+                        width: "200px",
+                        padding: "8px",
+                        borderRadius: "4px",
+                        border: "1px solid #ccc",
+                    }}
                 />
                 <input
                     type="text"
@@ -161,7 +167,13 @@ export default function QuizApp() {
                     value={firstNameEnglish}
                     onChange={(e) => setFirstNameEnglish(e.target.value)}
                     required
-                    className="signin-input"
+                    style={{
+                        marginBottom: "10px",
+                        width: "200px",
+                        padding: "8px",
+                        borderRadius: "4px",
+                        border: "1px solid #ccc",
+                    }}
                 />
                 <input
                     type="text"
@@ -169,35 +181,63 @@ export default function QuizApp() {
                     value={lastNameEnglish}
                     onChange={(e) => setLastNameEnglish(e.target.value)}
                     required
-                    className="signin-input"
+                    style={{
+                        marginBottom: "10px",
+                        width: "200px",
+                        padding: "8px",
+                        borderRadius: "4px",
+                        border: "1px solid #ccc",
+                    }}
                 />
-                <button onClick={fetchQuiz} className="signin-button">Start Quiz</button>
+                <button
+                    onClick={fetchQuiz}
+                    style={{
+                        width: "200px",
+                        padding: "8px",
+                        backgroundColor: "#4CAF50",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                    }}
+                >
+                    Start Quiz
+                </button>
             </div>
         );
     }
 
-    if (!quiz) return <div className="loading">Loading...</div>;
+    if (!quiz) return <div style={{ textAlign: "center" }}>Loading...</div>;
 
     return (
-        <div className="quiz-container">  //
-            <h1>{quiz.title}</h1>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "20px" }}>
+            <h1 style={{ marginBottom: "20px" }}>{quiz.title}</h1>
             {!submitted ? (
                 <>
-                    <div className="timer">
+                    <div style={{ marginBottom: "20px", fontSize: "18px", fontWeight: "bold" }}>
                         Time Left: {formatTime(timeLeft)}
                     </div>
                     {quiz.questions.map((q) => (
-                        <div key={q.id} className="question-block">
+                        <div
+                            key={q.id}
+                            style={{
+                                border: "1px solid #ccc",
+                                padding: "10px",
+                                marginBottom: "10px",
+                                width: "100%",
+                                maxWidth: "600px",
+                            }}
+                        >
                             <h3>{q.question_text}</h3>
                             {q.image_url && (
                                 <img
                                     src={
                                         q.image_url.includes("drive.google.com")
-                                            ? `https://quiz-app-backend-jp.fly.dev/proxy_media/?url=${encodeURIComponent(q.image_url)}`
+                                            ? `http://localhost:8000/proxy_media/?url=${encodeURIComponent(q.image_url)}`
                                             : q.image_url
                                     }
                                     alt="Question media"
-                                    className="media"
+                                    style={{ maxWidth: "100%" }}
                                 />
                             )}
                             {q.audio_url && (
@@ -205,20 +245,28 @@ export default function QuizApp() {
                                     controls
                                     onError={(e) => console.error("Audio element error:", e.target.error)}
                                 >
+                                    {console.log("Raw audio_url:", q.audio_url)}
+                                    {console.log(
+                                        "Computed src:",
+                                        q.audio_url.includes("drive.google.com") &&
+                                        !q.audio_url.includes("uc?export=download")
+                                            ? getDirectGoogleDriveUrl(q.audio_url)
+                                            : `http://localhost:8000/proxy_media/?url=${encodeURIComponent(q.audio_url)}`
+                                    )}
                                     <source
-                                        src={`https://quiz-app-backend-jp.fly.dev/proxy_media/?url=${encodeURIComponent(q.audio_url)}`}
+                                        src={`http://localhost:8000/proxy_media/?url=${encodeURIComponent(q.audio_url)}`}
                                         type="audio/mpeg"
                                     />
                                     Your browser does not support the audio element.
                                 </audio>
                             )}
                             {q.video_url && (
-                                <video controls className="media">
+                                <video controls style={{ maxWidth: "100%" }}>
                                     <source
                                         src={
                                             q.video_url.includes("catbox.moe")
                                                 ? q.video_url
-                                                : `https://quiz-app-backend-jp.fly.dev/proxy_media/?url=${encodeURIComponent(q.video_url)}`
+                                                : `http://localhost:8000/proxy_media/?url=${encodeURIComponent(q.video_url)}`
                                         }
                                     />
                                     Your browser does not support the video element.
@@ -229,38 +277,59 @@ export default function QuizApp() {
                                     type="text"
                                     value={answers[q.id] || ""}
                                     onChange={(e) => handleTextInput(q.id, e.target.value)}
-                                    className="text-input"
+                                    style={{
+                                        width: "100%",
+                                        padding: "8px",
+                                        borderRadius: "4px",
+                                        border: "1px solid #ccc",
+                                    }}
                                 />
                             ) : (
-                                <div className="choices">
+                                <div>
                                     {q.options.map((opt, index) => {
-                                        const cleanValue = opt.trim();
+                                        const cleanOpt = opt.includes(": ")
+                                            ? opt.split(": ")[1].trim()
+                                            : opt.trim();
                                         return (
-                                            <div key={index} className="choice-item">
-                                                <label className="choice-label">
-                                                    <input
-                                                        type="checkbox"
-                                                        id={`option-${q.id}-${index}`}
-                                                        checked={answers[q.id]?.includes(cleanValue) || false}
-                                                        onChange={() => handleCheckbox(q.id, opt)}
-                                                    />
-                                                </label>
-                                                <span className="choice-text">{cleanValue}</span>
-                                            </div>
+                                            <label
+                                                key={index}
+                                                style={{ display: "block", margin: "5px 0" }}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={answers[q.id]?.includes(cleanOpt) || false}
+                                                    onChange={() => handleCheckbox(q.id, opt)}
+                                                />
+                                                {opt}
+                                            </label>
                                         );
                                     })}
                                 </div>
                             )}
                         </div>
                     ))}
-                    <button onClick={submitQuiz} className="submit-button">Submit Quiz</button>
+                    <button
+                        onClick={submitQuiz}
+                        style={{
+                            padding: "8px 16px",
+                            backgroundColor: "#4CAF50",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "4px",
+                            cursor: "pointer",
+                        }}
+                    >
+                        Submit Quiz
+                    </button>
                 </>
             ) : (
-                <div className="result">
+                <div style={{ textAlign: "center" }}>
                     <h2>Quiz Submitted!</h2>
-                    <p>Your score: {score}/{total}</p>
+                    <p>
+                        Your score: {score}/{total}
+                    </p>
                 </div>
             )}
         </div>
     );
-} 
+}
