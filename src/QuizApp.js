@@ -15,6 +15,10 @@ export default function QuizApp() {
     const [score, setScore] = useState(null);
     const [total, setTotal] = useState(null);
     const [timeLeft, setTimeLeft] = useState(null);
+    const BASE_URL = process.env.NODE_ENV === "production"
+  ? "https://quiz-app-backend-jp.fly.dev"
+  : "http://localhost:8000";
+
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -31,7 +35,8 @@ export default function QuizApp() {
             setError("Please enter your student number, first name, last name, and ensure quiz parameters are provided.");
             return;
         }
-        const url = `${window.location.origin}/quiz/${parseInt(quizId)}?student_number=${studentNumber}&course_number=${courseNumber}`;
+        const url = `const url = \`${BASE_URL}/quiz/${quizId}\`;
+/${quizId}/quiz/${parseInt(quizId)}?student_number=${studentNumber}&course_number=${courseNumber}`;
         try {
             const response = await fetch(url);
             if (!response.ok) {
@@ -70,7 +75,8 @@ export default function QuizApp() {
         // Prevent multiple submissions
         if (submitted) return;
 
-        const submitUrl = `http://localhost:8000/submit_quiz/${parseInt(quizId)}`;
+        const submitUrl = `const url = \`${BASE_URL}/quiz/${quizId}\`;
+/${parseInt(quizId)}`;
         // Format answers for backend
         const formattedAnswers = {};
         Object.keys(answers).forEach((qId) => {
