@@ -148,6 +148,7 @@ export default function QuizApp() {
         return (
             <div className="quiz-container">
                 <h1>Enter Student Information</h1>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}>
                 <input
                     type="text"
                     placeholder="Student Number (required)"
