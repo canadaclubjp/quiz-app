@@ -31,7 +31,7 @@ export default function QuizApp() {
             setError("Please enter your student number, first name, last name, and ensure quiz parameters are provided.");
             return;
         }
-        const url = `http://localhost:8000/quiz/${parseInt(quizId)}?student_number=${studentNumber}&course_number=${courseNumber}`;
+        const url = `${window.location.origin}/quiz/${parseInt(quizId)}?student_number=${studentNumber}&course_number=${courseNumber}`;
         try {
             const response = await fetch(url);
             if (!response.ok) {
@@ -70,7 +70,7 @@ export default function QuizApp() {
         // Prevent multiple submissions
         if (submitted) return;
 
-        const submitUrl = `http://localhost:8000/submit_quiz/${parseInt(quizId)}`;
+        const submitUrl = `${window.location.origin}/submit_quiz/${parseInt(quizId)}`;
         // Format answers for backend
         const formattedAnswers = {};
         Object.keys(answers).forEach((qId) => {
