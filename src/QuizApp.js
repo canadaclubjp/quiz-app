@@ -70,7 +70,7 @@ export default function QuizApp() {
         // Prevent multiple submissions
         if (submitted) return;
 
-        const submitUrl = `${window.location.origin}/submit_quiz/${parseInt(quizId)}`;
+        const submitUrl = `http://localhost:8000/submit_quiz/${parseInt(quizId)}`;
         // Format answers for backend
         const formattedAnswers = {};
         Object.keys(answers).forEach((qId) => {
