@@ -5,6 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, Response
 import requests
 from sqlalchemy.orm import Session
+from starlette.responses import FileResponse
+
 from database import SessionLocal, engine, init_db, Base
 from models import Quiz, Question, Score
 from pydantic import BaseModel
@@ -37,16 +39,15 @@ try:
     scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
     # Get the credentials JSON string from the environment variable
     creds_json_str = os.environ.get("REACT_APP_GOOGLE_CREDENTIALS")
+    logger.info(f"Raw REACT_APP_GOOGLE_CREDENTIALS: {creds_json_str}")
     if not creds_json_str:
         raise ValueError("REACT_APP_GOOGLE_CREDENTIALS environment variable not set")
-
-    # Parse the JSON string into a dictionary
-    creds_info = json.loads(creds_json_str)
-    logger.info("Credentials JSON parsed")
-
-    # Load credentials from the dictionary
-    creds = Credentials.from_service_account_info(creds_info, scopes=scope)
-    logger.info("Credentials loaded")
+    try:
+        creds = json.loads(creds_json_str)
+        logger.info("Credentials JSON parsed")
+    except json.JSONDecodeError as e:
+        logger.error(f"Error parsing credentials JSON: {str(e)}")
+        raise
 
     # Authorize the Google client
     client = gspread.authorize(creds)
@@ -630,6 +631,7 @@ def clear_scores(db: Session = Depends(get_db)):
     db.query(Score).delete()
     db.commit()
     return {"message": "Scores cleared"}
+
 
 @app.get("/generate_qr/{quiz_id}/{course_number}")
 async def generate_qr(quiz_id: int, course_number: str, db: Session = Depends(get_db)):
