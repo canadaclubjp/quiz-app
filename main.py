@@ -266,10 +266,26 @@ def save_to_google_sheets(submission: AnswerSubmission, quiz_id: int, score: int
     course_sheet.append_row(row)
 
 
+# Replace one of your existing /test-log endpoints (you have two) with this:
+
 @app.get("/test-log")
-async def test_log():
-    logger.info("Test log endpoint triggered")
-    return {"message": "Logged"}
+async def test_log(question_id: int = 53, db: Session = Depends(get_db)):
+    try:
+        question = db.query(Question).filter(Question.id == question_id).first()
+        if not question:
+            return {"error": f"Question {question_id} not found"}
+
+        return {
+            "message": "Debug info",
+            "id": question.id,
+            "question_text": question.question_text,
+            "raw_correct_answers": question.correct_answers,
+            "parsed_correct_answers": json.loads(question.correct_answers) if question.correct_answers else [],
+            "options": json.loads(question.options) if question.options else [],
+            "is_text_input": question.is_text_input
+        }
+    except Exception as e:
+        return {"error": str(e)}
 
 
 @app.post("/verify_student/")
