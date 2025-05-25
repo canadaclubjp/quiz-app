@@ -508,7 +508,11 @@ async def submit_quiz(quiz_id: int, submission: AnswerSubmission, db: Session = 
     for q in questions:
         correct = json.loads(q.correct_answers) if q.correct_answers else []
         student_answer = submission.answers.get(str(q.id), [])
-        logging.info(f"Q{q.id}: Student answer raw={student_answer}, Correct={correct}")
+
+        # Enhanced logging
+        logging.info(f"=== QUESTION {q.id} DEBUG ===")
+        logging.info(f"Raw student_answer: {student_answer} (type: {type(student_answer)})")
+        logging.info(f"Raw correct answers: {correct} (type: {type(correct)})")
 
         # Strip prefixes (e.g., "A:", "D:") from both student answers and correct answers
         def strip_prefix(answer):
@@ -530,23 +534,47 @@ async def submit_quiz(quiz_id: int, submission: AnswerSubmission, db: Session = 
             else:
                 student_answer = ""
             student_answer_cleaned = strip_prefix(student_answer)
-            logging.info(f"Q{q.id}: Processed text answer='{student_answer_cleaned}'")
+            logging.info(f"Text answer cleaned: '{student_answer_cleaned}'")
             if student_answer_cleaned.lower() in [ans.lower() for ans in correct_cleaned]:
                 score += 1
+                logging.info(f"Q{q.id}: TEXT CORRECT - Score incremented to {score}")
+            else:
+                logging.info(f"Q{q.id}: TEXT INCORRECT")
         else:
+            # Multiple choice processing
             student_answer = student_answer if isinstance(student_answer, list) else []
             student_answer_cleaned = [strip_prefix(ans) for ans in student_answer]
-            logging.info(f"Q{q.id}: Processed MC answer={student_answer_cleaned}")
+            logging.info(f"MC answers cleaned: {student_answer_cleaned}")
 
-            # Award a point if any student answer matches a correct answer
-            # Replace lines 455-456 in your main.py with this corrected logic:
+            # Debug each comparison
+            match_found = False
+            for student_ans in student_answer_cleaned:
+                for correct_ans in correct_cleaned:
+                    logging.info(f"Comparing: '{student_ans}' == '{correct_ans}' ? {student_ans == correct_ans}")
+                    if student_ans == correct_ans:
+                        match_found = True
+                        break
+                if match_found:
+                    break
+
+            if match_found:
+                score += 1
+                logging.info(f"Q{q.id}: MC CORRECT - Score incremented to {score}")
+            else:
+                logging.info(f"Q{q.id}: MC INCORRECT - No matches found")
+
+        logging.info(f"=== END Q{q.id} DEBUG ===")
+
+
+
+
 
             # Award a point if any student answer exactly matches any correct answer
-            if any(ans == correct_ans for ans in student_answer_cleaned for correct_ans in correct_cleaned):
-                score += 1
-                logging.info(f"Q{q.id}: Correct - Score incremented")
-            else:
-                logging.info(f"Q{q.id}: Incorrect - Expected={correct_cleaned}, Got={student_answer_cleaned}")
+            # if any(ans == correct_ans for ans in student_answer_cleaned for correct_ans in correct_cleaned):
+            #     score += 1
+            #     logging.info(f"Q{q.id}: Correct - Score incremented")
+            # else:
+            #     logging.info(f"Q{q.id}: Incorrect - Expected={correct_cleaned}, Got={student_answer_cleaned}")
 
     try:
         db_score = Score(
