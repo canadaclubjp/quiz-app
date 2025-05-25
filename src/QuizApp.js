@@ -15,9 +15,6 @@ export default function QuizApp() {
     const [score, setScore] = useState(null);
     const [total, setTotal] = useState(null);
     const [timeLeft, setTimeLeft] = useState(null);
-    const BASE_URL = process.env.NODE_ENV === "production"
-  ? "https://quiz-app-backend-jp.fly.dev"
-  : "http://localhost:8000";
 
 
     useEffect(() => {
@@ -30,13 +27,13 @@ export default function QuizApp() {
         }
     }, []);
 
+    const BACKEND_URL = "https://quiz-app-backend-jp.fly.dev";
     const fetchQuiz = async () => {
         if (!studentNumber || !firstNameEnglish || !lastNameEnglish || !courseNumber || !quizId) {
             setError("Please enter your student number, first name, last name, and ensure quiz parameters are provided.");
             return;
         }
-        const url = `const url = \`${BASE_URL}/quiz/${quizId}\`;
-/${quizId}/quiz/${parseInt(quizId)}?student_number=${studentNumber}&course_number=${courseNumber}`;
+        const url = `${BACKEND_URL}/quiz/${parseInt(quizId)}?student_number=${studentNumber}&course_number=${courseNumber}`;
         try {
             const response = await fetch(url);
             if (!response.ok) {
@@ -75,8 +72,7 @@ export default function QuizApp() {
         // Prevent multiple submissions
         if (submitted) return;
 
-        const submitUrl = `const url = \`${BASE_URL}/quiz/${quizId}\`;
-/${parseInt(quizId)}`;
+        const submitUrl = `${BACKEND_URL}/submit_quiz/${parseInt(quizId)}`;
         // Format answers for backend
         const formattedAnswers = {};
         Object.keys(answers).forEach((qId) => {
@@ -249,7 +245,7 @@ export default function QuizApp() {
                                 <img
                                     src={
                                         q.image_url.includes("drive.google.com")
-                                            ? `http://localhost:8000/proxy_media/?url=${encodeURIComponent(q.image_url)}`
+                                            ? `${BACKEND_URL}/proxy_media/?url=${encodeURIComponent(q.image_url)}`
                                             : q.image_url
                                     }
                                     alt="Question media"
@@ -266,7 +262,7 @@ export default function QuizApp() {
                                     onError={(e) => console.error("Audio element error:", e.target.error)}
                                 >
                                     <source
-                                        src={`http://localhost:8000/proxy_media/?url=${encodeURIComponent(q.audio_url)}`}
+                                        src={`${BACKEND_URL}/proxy_media/?url=${encodeURIComponent(q.audio_url)}`}
                                         type="audio/mpeg"
                                     />
                                     Your browser does not support the audio element.
@@ -278,7 +274,7 @@ export default function QuizApp() {
                                         src={
                                             q.video_url.includes("catbox.moe")
                                                 ? q.video_url
-                                                : `http://localhost:8000/proxy_media/?url=${encodeURIComponent(q.video_url)}`
+                                                : `${BACKEND_URL}/proxy_media/?url=${encodeURIComponent(q.video_url)}`
                                         }
                                     />
                                     Your browser does not support the video element.
