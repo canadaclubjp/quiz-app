@@ -516,8 +516,8 @@ async def submit_quiz(quiz_id: int, submission: AnswerSubmission, db: Session = 
                 for sep in [": ", ":"]:
                     if sep in answer:
                         return answer.split(sep, 1)[-1].strip()
-                return answer.strip()
-            return answer
+            return answer.strip()
+
 
         # Process correct answers
         correct_cleaned = [strip_prefix(ans) for ans in correct]
@@ -538,8 +538,17 @@ async def submit_quiz(quiz_id: int, submission: AnswerSubmission, db: Session = 
             student_answer = student_answer if isinstance(student_answer, list) else []
             student_answer_cleaned = [strip_prefix(ans) for ans in student_answer]
             logging.info(f"Q{q.id}: Processed MC answer={student_answer_cleaned}")
-            if any(ans in correct_cleaned for ans in student_answer_cleaned):   # at least one correct
+
+            #  Check if all correct answers are selected and no incorrect ones
+            correct_set = set(correct_cleaned)
+            student_set = set(student_answer_cleaned)
+            incorrect_selected = any(ans not in correct_set for ans in student_set)
+            all_correct_selected = correct_set.issubset(student_set)
+            if all_correct_selected and not incorrect_selected:
                 score += 1
+                logging.info(f"Q{q.id}: Correct - Score incremented")
+            else:
+                logging.info(f"Q{q.id}: Incorrect - Expected={correct_set}, Got={student_set}")
 
     try:
         db_score = Score(
