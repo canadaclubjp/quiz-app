@@ -518,7 +518,6 @@ async def submit_quiz(quiz_id: int, submission: AnswerSubmission, db: Session = 
                         return answer.split(sep, 1)[-1].strip()
             return answer.strip()
 
-
         # Process correct answers
         correct_cleaned = [strip_prefix(ans) for ans in correct]
         logging.info(f"Q{q.id}: Correct cleaned={correct_cleaned}")
@@ -539,16 +538,12 @@ async def submit_quiz(quiz_id: int, submission: AnswerSubmission, db: Session = 
             student_answer_cleaned = [strip_prefix(ans) for ans in student_answer]
             logging.info(f"Q{q.id}: Processed MC answer={student_answer_cleaned}")
 
-            #  Check if all correct answers are selected and no incorrect ones
-            correct_set = set(correct_cleaned)
-            student_set = set(student_answer_cleaned)
-            incorrect_selected = any(ans not in correct_set for ans in student_set)
-            all_correct_selected = correct_set.issubset(student_set)
-            if all_correct_selected and not incorrect_selected:
+            # Award a point if any student answer matches a correct answer
+            if any(ans in correct_cleaned for ans in student_answer_cleaned):
                 score += 1
                 logging.info(f"Q{q.id}: Correct - Score incremented")
             else:
-                logging.info(f"Q{q.id}: Incorrect - Expected={correct_set}, Got={student_set}")
+                logging.info(f"Q{q.id}: Incorrect - Expected={correct_cleaned}, Got={student_answer_cleaned}")
 
     try:
         db_score = Score(
@@ -581,6 +576,7 @@ async def submit_quiz(quiz_id: int, submission: AnswerSubmission, db: Session = 
         raise HTTPException(status_code=500, detail=f"Failed to save submission: {str(e)}")
 
     return {"score": score, "total": total}
+
 
 @app.post("/add_quiz/")
 async def add_quiz(quiz: QuizCreate, db: Session = Depends(get_db)):
