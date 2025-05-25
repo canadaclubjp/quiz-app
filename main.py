@@ -817,6 +817,24 @@ async def debug_scoring(quiz_id: int, submission: AnswerSubmission, db: Session 
     }
 
 
+# Add this simple endpoint to your main.py to check what's in the database
+
+@app.get("/check_question/{question_id}")
+async def check_question(question_id: int, db: Session = Depends(get_db)):
+    question = db.query(Question).filter(Question.id == question_id).first()
+    if not question:
+        raise HTTPException(status_code=404, detail="Question not found")
+
+    return {
+        "id": question.id,
+        "question_text": question.question_text,
+        "raw_correct_answers": question.correct_answers,
+        "parsed_correct_answers": json.loads(question.correct_answers) if question.correct_answers else [],
+        "options": json.loads(question.options) if question.options else [],
+        "is_text_input": question.is_text_input
+    }
+
+
 # Also modify your submit_quiz endpoint to return debug info (replace the return statement at the end):
 # Change this line at the end of submit_quiz:
 # return {"score": score, "total": total}
