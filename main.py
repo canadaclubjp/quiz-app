@@ -539,7 +539,10 @@ async def submit_quiz(quiz_id: int, submission: AnswerSubmission, db: Session = 
             logging.info(f"Q{q.id}: Processed MC answer={student_answer_cleaned}")
 
             # Award a point if any student answer matches a correct answer
-            if any(ans in correct_cleaned for ans in student_answer_cleaned):
+            # Replace lines 455-456 in your main.py with this corrected logic:
+
+            # Award a point if any student answer exactly matches any correct answer
+            if any(ans == correct_ans for ans in student_answer_cleaned for correct_ans in correct_cleaned):
                 score += 1
                 logging.info(f"Q{q.id}: Correct - Score incremented")
             else:
