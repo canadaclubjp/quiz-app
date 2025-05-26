@@ -6,7 +6,7 @@ from fastapi.responses import StreamingResponse, Response
 import requests
 from sqlalchemy.orm import Session
 from starlette.responses import FileResponse
-
+from fastapi import Query, FastAPI, File, UploadFile
 from database import SessionLocal, engine, init_db, Base
 from models import Quiz, Question, Score
 from pydantic import BaseModel
@@ -346,7 +346,7 @@ async def read_quizzes(db: Session = Depends(get_db)):
             )} for q in quizzes]
 
 @app.get("/quiz/{quiz_id}")
-async def get_quiz(quiz_id: int, student_number: str, course_number: str, admin: bool = False, db: Session = Depends(get_db)):
+async def get_quiz(quiz_id: int, student_number: str, course_number: str, admin: bool = Query(False), db: Session = Depends(get_db)):
     # Skip student validation and existing score check for admin mode
     if not admin:
         sheet = spreadsheet.sheet1
@@ -487,7 +487,7 @@ async def delete_quiz(quiz_id: int, db: Session = Depends(get_db)):
 
 
 @app.post("/submit_quiz/{quiz_id}")
-async def submit_quiz(quiz_id: int, submission: AnswerSubmission, admin: bool = False, db: Session = Depends(get_db)):
+async def submit_quiz(quiz_id: int, submission: AnswerSubmission, admin: bool = Query(False), db: Session = Depends(get_db)):
     # Skip student validation for admin mode
     if not admin:
         sheet = spreadsheet.sheet1
