@@ -627,8 +627,11 @@ async def submit_quiz(quiz_id: int, submission: AnswerSubmission, db: Session = 
     return {  # use this only for debugging
         "score": score,
         "total": total,
-        "debug_url": f"/debug_scoring/{quiz_id}",
-        "message": "Use the debug_url with the same submission data to see detailed scoring info"
+        "debug": {
+            "question_53_raw_correct": json.loads(db.query(Question).filter(Question.id == 53).first().correct_answers),
+            "question_53_student_answer": submission.answers.get("53", []),
+            "submission_answers": submission.answers
+        }
     }
 
 
