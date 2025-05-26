@@ -346,40 +346,45 @@ async def read_quizzes(db: Session = Depends(get_db)):
             )} for q in quizzes]
 
 @app.get("/quiz/{quiz_id}")
-async def get_quiz(quiz_id: int, student_number: str, course_number: str, db: Session = Depends(get_db)):
-    sheet = spreadsheet.sheet1
-    try:
-        all_data = sheet.get_all_records()
-        logging.info(f"Fetched {len(all_data)} records from Google Sheet for quiz load")
-        normalized_course = course_number.lstrip("0")
-        logging.info(f"Validating quiz load: student_number={student_number}, course_number={normalized_course}")
-        student_valid = False
-        for row in all_data:
-            sheet_student = str(row.get("Student Number", "")).strip()
-            sheet_course = str(row.get("Course Number", "")).strip()
-            if (sheet_student == student_number and
-                    sheet_course == normalized_course):
-                student_valid = True
-                logging.info(f"Match found: Sheet Student={sheet_student}, Course={sheet_course}")
-                break
-        if not student_valid:
-            logging.warning(f"No match for student_number={student_number}, course_number={normalized_course}")
-            raise HTTPException(status_code=403, detail="Invalid student number for this course")
-    except Exception as e:
-        logging.error(f"Error verifying student: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to validate student: {str(e)}")
+async def get_quiz(quiz_id: int, student_number: str, course_number: str, admin: bool = False, db: Session = Depends(get_db)):
+    # Skip student validation and existing score check for admin mode
+    if not admin:
+        sheet = spreadsheet.sheet1
+        try:
+            all_data = sheet.get_all_records()
+            logging.info(f"Fetched {len(all_data)} records from Google Sheet for quiz load")
+            normalized_course = course_number.lstrip("0")
+            logging.info(f"Validating quiz load: student_number={student_number}, course_number={normalized_course}")
+            student_valid = False
+            for row in all_data:
+                sheet_student = str(row.get("Student Number", "")).strip()
+                sheet_course = str(row.get("Course Number", "")).strip()
+                if (sheet_student == student_number and
+                        sheet_course == normalized_course):
+                    student_valid = True
+                    logging.info(f"Match found: Sheet Student={sheet_student}, Course={sheet_course}")
+                    break
+            if not student_valid:
+                logging.warning(f"No match for student_number={student_number}, course_number={normalized_course}")
+                raise HTTPException(status_code=403, detail="Invalid student number for this course")
+        except Exception as e:
+            logging.error(f"Error verifying student: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Failed to validate student: {str(e)}")
 
     quiz = db.query(Quiz).filter(Quiz.id == quiz_id).first()
     if not quiz:
         raise HTTPException(status_code=404, detail="Quiz not found")
 
-    existing_score = db.query(Score).filter(
-        Score.student_number == student_number,
-        Score.quiz_id == quiz_id
-    ).first()
-    if existing_score:
-        return {"message": "You have already taken this quiz.", "score": existing_score.score,
-                "total": existing_score.total_questions}
+    # Skip existing score check for admin mode
+    if not admin:
+        existing_score = db.query(Score).filter(
+            Score.student_number == student_number,
+            Score.quiz_id == quiz_id
+        ).first()
+        if existing_score:
+            return {"message": "You have already taken this quiz.", "score": existing_score.score,
+                    "total": existing_score.total_questions}
+
     logger.info(f"Querying questions for quiz {quiz_id}")
     questions = db.query(Question).filter(Question.quiz_id == quiz_id).all()
     logger.info(f"Raw questions from DB: {questions}")
@@ -481,42 +486,46 @@ async def delete_quiz(quiz_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Failed to delete quiz: {str(e)}")
 
 
-@app.post("/submit_quiz/{quiz_id}")  # scoring endpoint
-async def submit_quiz(quiz_id: int, submission: AnswerSubmission, db: Session = Depends(get_db)):
-    sheet = spreadsheet.sheet1
-    try:
-        all_data = sheet.get_all_records()
-        logging.info(f"Fetched {len(all_data)} records from Google Sheet for validation")
-        normalized_course = submission.course_number.lstrip("0")
-        logging.info(f"Validating: student_number={submission.student_number}, course_number={normalized_course}")
-        student_valid = False
-        for row in all_data:
-            sheet_student = str(row.get("Student Number", "")).strip()
-            sheet_course = str(row.get("Course Number", "")).strip()
-            if (sheet_student == submission.student_number and
-                    sheet_course == normalized_course):
-                student_valid = True
-                logging.info(f"Match found: Sheet Student={sheet_student}, Course={sheet_course}")
-                break
-        if not student_valid:
-            logging.warning(
-                f"No match for student_number={submission.student_number}, course_number={normalized_course}")
-            raise HTTPException(status_code=403, detail="Invalid student number for this course")
-    except Exception as e:
-        logging.error(f"Error verifying student: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to validate student: {str(e)}")
+@app.post("/submit_quiz/{quiz_id}")
+async def submit_quiz(quiz_id: int, submission: AnswerSubmission, admin: bool = False, db: Session = Depends(get_db)):
+    # Skip student validation for admin mode
+    if not admin:
+        sheet = spreadsheet.sheet1
+        try:
+            all_data = sheet.get_all_records()
+            logging.info(f"Fetched {len(all_data)} records from Google Sheet for validation")
+            normalized_course = submission.course_number.lstrip("0")
+            logging.info(f"Validating: student_number={submission.student_number}, course_number={normalized_course}")
+            student_valid = False
+            for row in all_data:
+                sheet_student = str(row.get("Student Number", "")).strip()
+                sheet_course = str(row.get("Course Number", "")).strip()
+                if (sheet_student == submission.student_number and
+                        sheet_course == normalized_course):
+                    student_valid = True
+                    logging.info(f"Match found: Sheet Student={sheet_student}, Course={sheet_course}")
+                    break
+            if not student_valid:
+                logging.warning(
+                    f"No match for student_number={submission.student_number}, course_number={normalized_course}")
+                raise HTTPException(status_code=403, detail="Invalid student number for this course")
+        except Exception as e:
+            logging.error(f"Error verifying student: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Failed to validate student: {str(e)}")
 
     quiz = db.query(Quiz).filter(Quiz.id == quiz_id).first()
     if not quiz:
         raise HTTPException(status_code=404, detail="Quiz not found")
 
-    existing_score = db.query(Score).filter(
-        Score.student_number == submission.student_number,
-        Score.quiz_id == quiz_id
-    ).first()
-    if existing_score:
-        return {"message": "You have already taken this quiz.", "score": existing_score.score,
-                "total": existing_score.total_questions}
+    # Skip existing score check for admin mode
+    if not admin:
+        existing_score = db.query(Score).filter(
+            Score.student_number == submission.student_number,
+            Score.quiz_id == quiz_id
+        ).first()
+        if existing_score:
+            return {"message": "You have already taken this quiz.", "score": existing_score.score,
+                    "total": existing_score.total_questions}
 
     questions = db.query(Question).filter(Question.quiz_id == quiz_id).all()
     total = len(questions)
@@ -574,35 +583,37 @@ async def submit_quiz(quiz_id: int, submission: AnswerSubmission, db: Session = 
 
         logging.info(f"=== END Q{q.id} DEBUG ===")
 
-    try:
-        db_score = Score(
-            student_number=submission.student_number,
-            quiz_id=quiz_id,
-            score=score,
-            total_questions=total,
-            first_name=submission.first_name_english,
-            last_name=submission.last_name_english,
-            course_number=submission.course_number
-        )
-        db.add(db_score)
-        db.commit()
+    # Skip saving to database and Google Sheets for admin mode
+    if not admin:
+        try:
+            db_score = Score(
+                student_number=submission.student_number,
+                quiz_id=quiz_id,
+                score=score,
+                total_questions=total,
+                first_name=submission.first_name_english,
+                last_name=submission.last_name_english,
+                course_number=submission.course_number
+            )
+            db.add(db_score)
+            db.commit()
 
-        save_to_google_sheets(submission, quiz_id, score, total)
-        log_quiz_submission(
-            student_number=submission.student_number,
-            course_number=submission.course_number,
-            first_name=submission.first_name_english,
-            last_name=submission.last_name_english,
-            quiz_id=quiz_id,
-            quiz_title=quiz.title,
-            score=score,
-            total=total
-        )
-        logger.info(f"Quiz {quiz_id} submitted by {submission.student_number}: {score}/{total}")
-    except Exception as e:
-        db.rollback()
-        logger.error(f"Error saving quiz submission: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to save submission: {str(e)}")
+            save_to_google_sheets(submission, quiz_id, score, total)
+            log_quiz_submission(
+                student_number=submission.student_number,
+                course_number=submission.course_number,
+                first_name=submission.first_name_english,
+                last_name=submission.last_name_english,
+                quiz_id=quiz_id,
+                quiz_title=quiz.title,
+                score=score,
+                total=total
+            )
+            logger.info(f"Quiz {quiz_id} submitted by {submission.student_number}: {score}/{total}")
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Error saving quiz submission: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Failed to save submission: {str(e)}")
 
     # return {"score": score, "total": total}
     return {  # use this only for debugging
@@ -614,7 +625,6 @@ async def submit_quiz(quiz_id: int, submission: AnswerSubmission, db: Session = 
             "submission_answers": submission.answers
         }
     }
-
 
 @app.post("/add_quiz/")
 async def add_quiz(quiz: QuizCreate, db: Session = Depends(get_db)):
