@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import "./QuizApp.css"
+import "./QuizApp.css";
 
 export default function QuizApp() {
     const [quiz, setQuiz] = useState(null);
@@ -15,25 +15,40 @@ export default function QuizApp() {
     const [score, setScore] = useState(null);
     const [total, setTotal] = useState(null);
     const [timeLeft, setTimeLeft] = useState(null);
-
+    const [isAdminMode, setIsAdminMode] = useState(false); // New state for admin mode
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const quizIdFromUrl = urlParams.get("quizId");
         const courseNum = urlParams.get("courseNumber");
+        const adminMode = urlParams.get("admin") === "true"; // Check for admin mode
         if (quizIdFromUrl && courseNum) {
             setQuizId(quizIdFromUrl);
             setCourseNumber(courseNum);
         }
+        if (adminMode) {
+            setIsAdminMode(true);
+            setStudentNumber("ADMIN_TEST"); // Default for admin testing
+            setFirstNameEnglish("Admin");
+            setLastNameEnglish("Test");
+        }
     }, []);
+
+   // 🔁 Fetch only after quizId + courseNumber + isAdminMode are set
+   useEffect(() => {
+       if (isAdminMode && quizId && courseNumber) {
+           fetchQuiz();
+       }
+   }, [isAdminMode, quizId, courseNumber]);
+
 
     const BACKEND_URL = "https://quiz-app-backend-jp.fly.dev";
     const fetchQuiz = async () => {
-        if (!studentNumber || !firstNameEnglish || !lastNameEnglish || !courseNumber || !quizId) {
+        if (!isAdminMode && (!studentNumber || !firstNameEnglish || !lastNameEnglish || !courseNumber || !quizId)) {
             setError("Please enter your student number, first name, last name, and ensure quiz parameters are provided.");
             return;
         }
-        const url = `${BACKEND_URL}/quiz/${parseInt(quizId)}?student_number=${studentNumber}&course_number=${courseNumber}`;
+        const url = `${BACKEND_URL}/quiz/${parseInt(quizId)}?student_number=${studentNumber}&course_number=${courseNumber}${isAdminMode ? "&admin=true" : ""}`;
         try {
             const response = await fetch(url);
             if (!response.ok) {
@@ -41,7 +56,7 @@ export default function QuizApp() {
                 throw new Error(`HTTP error! status: ${response.status}, details: ${errorText}`);
             }
             const data = await response.json();
-            if (data.message === "You have already taken this quiz.") {
+            if (data.message === "You have already taken this quiz." && !isAdminMode) {
                 setSubmitted(true);
                 setScore(data.score);
                 setTotal(data.total);
@@ -54,7 +69,7 @@ export default function QuizApp() {
             setError(null);
 
             const hasAudioOrVideo = data.questions.some((q) => q.audio_url || q.video_url);
-            const initialTime = hasAudioOrVideo ? 10 * 60 : 5 * 60;
+            const initialTime = hasAudioOrVideo ? 10 * 60 : 5 * 60; // Preserved original time logic
             setTimeLeft(initialTime);
         } catch (err) {
             console.error("Error fetching quiz:", err);
@@ -64,7 +79,7 @@ export default function QuizApp() {
 
     // Memoize submitQuiz to prevent unnecessary re-renders and dependency issues
     const submitQuiz = useCallback(async () => {
-        if (!studentNumber || !firstNameEnglish || !lastNameEnglish) {
+        if (!isAdminMode && (!studentNumber || !firstNameEnglish || !lastNameEnglish)) {
             setError("Student number, first name, and last name are required.");
             return;
         }
@@ -72,7 +87,7 @@ export default function QuizApp() {
         // Prevent multiple submissions
         if (submitted) return;
 
-        const submitUrl = `${BACKEND_URL}/submit_quiz/${parseInt(quizId)}`;
+        const submitUrl = `${BACKEND_URL}/submit_quiz/${parseInt(quizId)}${isAdminMode ? "?admin=true" : ""}`;
         // Format answers for backend
         const formattedAnswers = {};
         Object.keys(answers).forEach((qId) => {
@@ -113,9 +128,9 @@ export default function QuizApp() {
             submitQuiz();
             return;
         }
-        const timerId = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
+        const timerId = setInterval(() => setTimeLeft((prev) => prev - 1), 1000); // Preserved original timer logic
         return () => clearInterval(timerId);
-    }, [timeLeft, submitted, submitQuiz]); // Added submitQuiz to dependencies
+    }, [timeLeft, submitted, submitQuiz]); // Preserved dependencies
 
     const handleTextInput = (questionId, value) => {
         console.log(`Q${questionId} - Text Input:`, value);
@@ -138,7 +153,7 @@ export default function QuizApp() {
     const formatTime = (seconds) => {
         const minutes = Math.floor(seconds / 60);
         const secs = seconds % 60;
-        return `${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+        return `${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`; // Preserved original format
     };
 
     const getDirectGoogleDriveUrl = (url) => {
@@ -149,9 +164,9 @@ export default function QuizApp() {
         return url;
     };
 
-    if (error) return <div style={{ textAlign: "center", color: "red" }}>Error: {error}</div>;
+    if (error) return <div className="quiz-container" style={{ textAlign: "center", color: "red" }}>Error: {error}</div>;
 
-    if (!isStudentIdEntered) {
+    if (!isStudentIdEntered && !isAdminMode) {
         return (
             <div className="quiz-container">
                 <h1>Enter Student Information</h1>
@@ -217,7 +232,7 @@ export default function QuizApp() {
         );
     }
 
-    if (!quiz) return <div style={{ textAlign: "center" }}>Loading...</div>;
+    if (!quiz) return <div className="quiz-container" style={{ textAlign: "center" }}>Loading...</div>;
 
     return (
         <div className="quiz-container">
