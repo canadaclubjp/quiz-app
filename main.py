@@ -113,8 +113,10 @@ async def read_root():
 # Rest of your existing code (CORS, get_db, models, etc.) remains unchanged
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://quiz-frontend-frontend.vercel.app"
-                   "https://*.vercel.app",],  # ✅ allow all Vercel subdomains (wildcard support added in FastAPI > 0.65)
+    allow_origins=[
+        "http://localhost:3000",
+        "https://quiz-frontend-frontend.vercel.app"
+        "https://*.vercel.app",],  # ✅ allow all Vercel subdomains (wildcard support added in FastAPI > 0.65)
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
