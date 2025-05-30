@@ -24,6 +24,7 @@ import backoff
 import logging
 import pytz
 import uvicorn  # Add uvicorn import for running the app
+import base64
 
 
 logging.basicConfig(level=logging.INFO)
@@ -38,15 +39,19 @@ try:
     logger.info("Loading credentials from environment variable")
     scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
     # Get the credentials JSON string from the environment variable
-    creds_json_str = os.environ.get("REACT_APP_GOOGLE_CREDENTIALS")
-    logger.info(f"Raw REACT_APP_GOOGLE_CREDENTIALS: {creds_json_str}")
-    if not creds_json_str:
+    import base64
+
+    creds_b64 = os.environ.get("REACT_APP_GOOGLE_CREDENTIALS")
+    if not creds_b64:
         raise ValueError("REACT_APP_GOOGLE_CREDENTIALS environment variable not set")
+
     try:
+        creds_json_str = base64.b64decode(creds_b64).decode("utf-8")
+        logger.info("Base64-decoded credentials string loaded")
         creds = json.loads(creds_json_str)
-        logger.info("Credentials JSON parsed")
-    except json.JSONDecodeError as e:
-        logger.error(f"Error parsing credentials JSON: {str(e)}")
+        logger.info("Credentials JSON parsed successfully")
+    except Exception as e:
+        logger.error(f"Error decoding/parsing credentials JSON: {str(e)}")
         raise
 
     # Authorize the Google client
@@ -111,16 +116,20 @@ async def read_root():
     ]}
 
 # Rest of your existing code (CORS, get_db, models, etc.) remains unchanged
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "https://quiz-frontend-frontend.vercel.app"
-        "https://*.vercel.app",],  # ✅ allow all Vercel subdomains (wildcard support added in FastAPI > 0.65)
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,  # must be false when allow_origins["*"]
+    # allow_origins=[
+    #     "http://localhost:3000",
+    #     "https://quiz-frontend-frontend.vercel.app"
+    #     "https://*.vercel.app",],  # ✅ allow all Vercel subdomains (wildcard support added in FastAPI > 0.65)
+    # allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 def get_db():
     logger.info(f"SessionLocal status: {SessionLocal}")
