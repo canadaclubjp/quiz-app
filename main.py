@@ -39,19 +39,18 @@ try:
     logger.info("Loading credentials from environment variable")
     scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
     # Get the credentials JSON string from the environment variable
-    import base64
 
-    creds_b64 = os.environ.get("REACT_APP_GOOGLE_CREDENTIALS")
-    if not creds_b64:
+
+    encoded_creds = os.environ.get("REACT_APP_GOOGLE_CREDENTIALS")
+    if not encoded_creds:
         raise ValueError("REACT_APP_GOOGLE_CREDENTIALS environment variable not set")
 
     try:
-        creds_json_str = base64.b64decode(creds_b64).decode("utf-8")
-        logger.info("Base64-decoded credentials string loaded")
-        creds = json.loads(creds_json_str)
-        logger.info("Credentials JSON parsed successfully")
+        decoded_creds_json = base64.b64decode(encoded_creds).decode("utf-8")
+        creds = json.loads(decoded_creds_json)
+        logger.info("Credentials decoded and parsed")
     except Exception as e:
-        logger.error(f"Error decoding/parsing credentials JSON: {str(e)}")
+        logger.error(f"Error decoding/parsing credentials: {str(e)}")
         raise
 
     # Authorize the Google client
