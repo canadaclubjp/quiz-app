@@ -41,7 +41,7 @@ try:
     # Get the credentials JSON string from the environment variable
 
 
-    encoded_creds = os.environ.get("REACT_APP_GOOGLE_CREDENTIALS")
+    encoded_creds = os.environ.get("REACT_APP_GOOGLE_CREDENTIALS")   #Use these
     if not encoded_creds:
         raise ValueError("REACT_APP_GOOGLE_CREDENTIALS environment variable not set")
 
