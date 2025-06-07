@@ -385,6 +385,28 @@ export default function AdminQuizApp() {
                     <div style={{ marginBottom: "10px" }}>
                         <button onClick={generateQuizUrl}>Generate URL</button>
                         <button onClick={downloadQRCode}>Download QR Code</button>
+                        <button
+                          onClick={() => {
+                            const cleanCourseNumber = courseNumber.trim().replace(/[^0-9]/g
+                            const adminUrl = 'https://quiz-frontend-frontend.vercel.app/quiz?quizID=${selectedQuizId)&courseNumber=${cleanCourseNumber}&admin=true';
+                            window.open(adminUrl, "_blank");
+                          }}
+                          style={{
+                            padding: "8px 16px",
+                            backgroundColor: "#fbbc04",
+                            color: "#202124",
+                            border: "none",
+                            borderRadius: "4px",
+                            cursor: "pointer",
+                            marginLeft: "10px"
+                            }}
+                        >
+                            👨‍💻 Test as Admin
+                        </button>
+                    </div>
+
+
+                          }
                     </div>
                     {quizUrl && (
                         <>
