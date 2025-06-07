@@ -373,55 +373,58 @@ export default function AdminQuizApp() {
             </div>
 
             {editingQuizId && (
-                <div className="share-section">
-                    <h3>Share Quiz</h3>
-                    <input
-                        type="text"
-                        placeholder="Enter Course Number (e.g., 0012323)"
-                        value={courseNumber}
-                        onChange={(e) => setCourseNumber(e.target.value)}
-                        style={{ width: "50%", padding: "8px", marginBottom: "10px", borderRadius: "4px", border: "1px solid #dadce0" }}
-                    />
-                    <div style={{ marginBottom: "10px" }}>
-                        <button onClick={generateQuizUrl}>Generate URL</button>
-                        <button onClick={downloadQRCode}>Download QR Code</button>
-                        <button
-                          onClick={() => {
-                            const cleanCourseNumber = courseNumber.trim().replace(/[^0-9]/g, '');
-                            const adminUrl = 'https://quiz-frontend-frontend.vercel.app/quiz?quizID=${selectedQuizId)&courseNumber=${cleanCourseNumber}&admin=true';
-                            window.open(adminUrl, "_blank");
-                          }}
-                          style={{
-                            padding: "8px 16px",
-                            backgroundColor: "#fbbc04",
-                            color: "#202124",
-                            border: "none",
-                            borderRadius: "4px",
-                            cursor: "pointer",
-                            marginLeft: "10px"
-                            }}
-                        >
-                            👨‍💻 Test as Admin
-                        </button>
-                    </div>
-
-
-                          }
-                    </div>
-                    {quizUrl && (
-                        <>
-                            <p>
-                                Generated URL: <a href={quizUrl} target="_blank" rel="noopener noreferrer">{quizUrl}</a>
-                            </p>
-                            <img
-                                src={`https://quiz-app-backend-jp.fly.dev/generate_qr/${selectedQuizId}/${courseNumber.trim().replace(/[^0-9]/g, '')}`}
-                                alt={`QR Code for Quiz ${selectedQuizId}`}
-                                className="qr-code"
-                            />
-                        </>
-                    )}
-                </div>
-            )}
+    <div className="share-section">
+        <h3>Share Quiz</h3>
+        <input
+            type="text"
+            placeholder="Enter Course Number (e.g., 0012323)"
+            value={courseNumber}
+            onChange={(e) => setCourseNumber(e.target.value)}
+            style={{
+                width: "50%",
+                padding: "8px",
+                marginBottom: "10px",
+                borderRadius: "4px",
+                border: "1px solid #dadce0",
+            }}
+        />
+        <div style={{ marginBottom: "10px" }}>
+            <button onClick={generateQuizUrl}>Generate URL</button>
+            <button onClick={downloadQRCode}>Download QR Code</button>
+            <button
+                onClick={() => {
+                    const cleanCourseNumber = courseNumber.trim().replace(/[^0-9]/g, '');
+                    const adminUrl = `https://quiz-frontend-frontend.vercel.app/quiz?quizId=${selectedQuizId}&courseNumber=${cleanCourseNumber}&admin=true`;
+                    window.open(adminUrl, "_blank");
+                }}
+                style={{
+                    padding: "8px 16px",
+                    backgroundColor: "#fbbc04",
+                    color: "#202124",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    marginLeft: "10px",
+                }}
+            >
+                👨‍💻 Test as Admin
+            </button>
         </div>
-    );
-}
+
+        {quizUrl && (
+            <>
+                <p>
+                    Generated URL:{" "}
+                    <a href={quizUrl} target="_blank" rel="noopener noreferrer">
+                        {quizUrl}
+                    </a>
+                </p>
+                <img
+                    src={`https://quiz-app-backend-jp.fly.dev/generate_qr/${selectedQuizId}/${courseNumber.trim().replace(/[^0-9]/g, '')}`}
+                    alt={`QR Code for Quiz ${selectedQuizId}`}
+                    className="qr-code"
+                />
+            </>
+        )}
+    </div>
+)}
