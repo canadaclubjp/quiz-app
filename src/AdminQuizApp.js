@@ -387,7 +387,7 @@ export default function AdminQuizApp() {
                         <button onClick={downloadQRCode}>Download QR Code</button>
                         <button
                           onClick={() => {
-                            const cleanCourseNumber = courseNumber.trim().replace(/[^0-9]/g
+                            const cleanCourseNumber = courseNumber.trim().replace(/[^0-9]/g, '');
                             const adminUrl = 'https://quiz-frontend-frontend.vercel.app/quiz?quizID=${selectedQuizId)&courseNumber=${cleanCourseNumber}&admin=true';
                             window.open(adminUrl, "_blank");
                           }}
