@@ -27,6 +27,8 @@ import uvicorn  # Add uvicorn import for running the app
 import base64
 
 
+print(f"=== main.py started at {datetime.now()} ===")
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -34,31 +36,31 @@ logger.info("Starting main.py import")
 logging.info(f"Credentials check: {os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')}")
 
 
-# Google Sheets setup
 try:
     logger.info("Loading credentials from environment variable")
-    scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-    # Get the credentials JSON string from the environment variable
-
-
-    encoded_creds = os.environ.get("REACT_APP_GOOGLE_CREDENTIALS")   #Use these
+    encoded_creds = os.environ.get("REACT_APP_GOOGLE_CREDENTIALS")
     if not encoded_creds:
         raise ValueError("REACT_APP_GOOGLE_CREDENTIALS environment variable not set")
 
-    try:
-        decoded_creds_json = base64.b64decode(encoded_creds).decode("utf-8")
-        creds = json.loads(decoded_creds_json)
-        logger.info("Credentials decoded and parsed")
-    except Exception as e:
-        logger.error(f"Error decoding/parsing credentials: {str(e)}")
-        raise
+    decoded_creds_json = base64.b64decode(encoded_creds).decode("utf-8")
+    creds_dict = json.loads(decoded_creds_json)
+    logger.info("Credentials decoded and parsed")
 
-    # Authorize the Google client
-    client = gspread.authorize(creds)
-    logger.info("Google client authorized")
+    # Convert to proper Google Credentials object
+    scopes = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive"
+    ]
+    credentials = Credentials.from_service_account_info(creds_dict, scopes=scopes)
+
+    # Authorize the Google Sheets client
+    client = gspread.authorize(credentials)
+    logger.info("Google Sheets client authorized")
+
 except Exception as e:
     logger.error(f"Failed to load Google credentials: {str(e)}")
     raise
+
 
 # Open StudentData spreadsheet
 try:
