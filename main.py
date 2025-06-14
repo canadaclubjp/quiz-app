@@ -123,7 +123,7 @@ app.add_middleware(
     # allow_origins=["*"],
     # allow_credentials=False,  # must be false when allow_origins["*"]
     allow_origins=[
-        "http://localhost:3000",
+        # "http://localhost:3000",
         "https://quiz-frontend-frontend.vercel.app",
         "https://*.vercel.app",],  # ✅ allow all Vercel subdomains (wildcard support added in FastAPI > 0.65)
     allow_credentials=True,
