@@ -314,19 +314,18 @@ export default function QuizApp() {
                                             ? opt.split(": ")[1].trim()
                                             : opt.trim();
                                         return (
-                                            <label
-                                                key={index}
-                                                style={{ display: "block", margin: "5px 0" }}
-                                            >
+                                            <div key={index} className="choice-item">
                                                 <input
                                                     type="checkbox"
-                                                    checked={Array.isArray(answers[q.id]) && answers[q.id].includes(cleanOpt) || false}
+                                                    checked={Array.isArray(answers[q.id]) && answers[q.id].includes(cleanOpt)}
                                                     onChange={() => handleCheckbox(q.id, opt)}
                                                 />
-                                                {opt}
-                                            </label>
+                                                <span className="choice-text">{opt}</span>
+                                            </div>
                                         );
                                     })}
+
+
                                 </div>
                             )}
                         </div>
