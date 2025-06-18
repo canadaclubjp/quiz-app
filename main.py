@@ -580,19 +580,19 @@ async def submit_quiz(quiz_id: int, submission: AnswerSubmission, admin: bool = 
             else:
                 logging.info(f"Q{q.id}: TEXT INCORRECT")
         else:
-            # Multiple choice processing - FIXED VERSION
-            student_answer = student_answer if isinstance(student_answer, list) else []
-            student_answer_cleaned = [strip_prefix(ans) for ans in student_answer]
-            logging.info(f"MC answers cleaned: {student_answer_cleaned}")
+            # Multiple choice processing - FIXED for radio buttons (single selection)
+            if isinstance(student_answer, list) and student_answer:
+                student_answer = student_answer[0]  # take the first answer if somehow it's an array
+            elif not isinstance(student_answer, str):
+                student_answer = ""
+            student_answer_cleaned = strip_prefix(student_answer)
+            logging.info(f"MC answer cleaned: '{student_answer_cleaned}'")
 
-            # Check if any student answer matches any correct answer
-            match_found = any(student_ans in correct_cleaned for student_ans in student_answer_cleaned)
-
-            if match_found:
+            if student_answer_cleaned in correct_cleaned:
                 score += 1
                 logging.info(f"Q{q.id}: MC CORRECT - Score incremented to {score}")
             else:
-                logging.info(f"Q{q.id}: MC INCORRECT - Expected any of {correct_cleaned}, Got {student_answer_cleaned}")
+                logging.info(f"Q{q.id}: MC INCORRECT - Expected one of {correct_cleaned}, Got '{student_answer_cleaned}'")
 
         logging.info(f"=== END Q{q.id} DEBUG ===")
 
@@ -628,16 +628,8 @@ async def submit_quiz(quiz_id: int, submission: AnswerSubmission, admin: bool = 
             logger.error(f"Error saving quiz submission: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Failed to save submission: {str(e)}")
 
-    # return {"score": score, "total": total}
-    return {  # use this only for debugging
-        "score": score,
-        "total": total,
-        "debug": {
-            "question_53_raw_correct": json.loads(db.query(Question).filter(Question.id == 53).first().correct_answers),
-            "question_53_student_answer": submission.answers.get("53", []),
-            "submission_answers": submission.answers
-        }
-    }
+    return {"score": score, "total": total}
+
 
 @app.post("/add_quiz/")
 async def add_quiz(quiz: QuizCreate, db: Session = Depends(get_db)):
