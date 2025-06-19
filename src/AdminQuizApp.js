@@ -426,6 +426,8 @@ export default function AdminQuizApp() {
                             />
                         </>
                     )}
-                </div>     //Comments
+                </div>
             )}
-// dummy change to trigger redeploy
+        </div>
+    );
+}
