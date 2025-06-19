@@ -316,9 +316,11 @@ export default function QuizApp() {
                                         return (
                                             <div key={index} className="choice-item">
                                                 <input
-                                                    type="checkbox"
-                                                    checked={Array.isArray(answers[q.id]) && answers[q.id].includes(cleanOpt)}
-                                                    onChange={() => handleCheckbox(q.id, opt)}
+                                                    type="radio"
+                                                    name={`question-${q.id}`}  // Ensures grouping
+                                                    checked={answers[q.id] === cleanOpt}
+                                                    onChange={() => setAnswers((prev) => ({ ...prev, [q.id]: cleanOpt }))}
+                                                    required
                                                 />
                                                 <span className="choice-text">{opt}</span>
                                             </div>
