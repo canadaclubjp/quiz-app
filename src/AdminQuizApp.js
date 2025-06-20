@@ -292,9 +292,10 @@ export default function AdminQuizApp() {
                         />
                         <label style={{ display: "block", marginBottom: "5px" }}>
                             <input
-                                type="checkbox"
-                                checked={q.isTextInput}
-                                onChange={(e) => updateQuestion(qIndex, "isTextInput", e.target.checked)}
+                                type="radio"
+                                name={`question-${q.id`}
+                                checked={answers[q.id] === cleanOpt}
+                                onChange={() => setAnswers((prev) => ({ ...prev, [q.id]: cleanOpt}))}
                             />
                             Text Input Question
                         </label>
