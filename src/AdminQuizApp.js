@@ -293,9 +293,9 @@ export default function AdminQuizApp() {
                         <label style={{ display: "block", marginBottom: "5px" }}>
                             <input
                                 type="radio"
-                                name={`question-${q.id`}
+                                name={`question-${q.id}`}
                                 checked={answers[q.id] === cleanOpt}
-                                onChange={() => setAnswers((prev) => ({ ...prev, [q.id]: cleanOpt}))}
+                                onChange={() => setAnswers((prev) => ({ ...prev, [q.id]: cleanOpt }))}
                             />
                             Text Input Question
                         </label>
