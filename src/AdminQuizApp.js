@@ -36,6 +36,7 @@ export default function AdminQuizApp() {
         if (!quizId) return;
         try {
             const response = await axios.get(`https://quiz-app-backend-jp.fly.dev/quiz_details/${quizId}`);
+            console.log("Quiz details response:", response.data)
             setQuizTitle(response.data.title);
             setQuizDescription(response.data.description);
             setQuestions(response.data.questions.map(q => ({
@@ -50,8 +51,8 @@ export default function AdminQuizApp() {
             setEditingQuizId(quizId);
             setError(null);
         } catch (err) {
-            console.error("Error fetching quiz details:", err);
-            setError(err.message);
+            console.error("Error fetching quiz details:", err.response ? err. response.data : err.message);
+            setError(`Failed to fetch details for quiz ${quizID}: ${err.message}`);
         }
     };
 
