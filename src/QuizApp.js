@@ -15,34 +15,33 @@ export default function QuizApp() {
     const [score, setScore] = useState(null);
     const [total, setTotal] = useState(null);
     const [timeLeft, setTimeLeft] = useState(null);
-    const [isAdminMode, setIsAdminMode] = useState(false); // New state for admin mode
+    const [isAdminMode, setIsAdminMode] = useState(false);
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const quizIdFromUrl = urlParams.get("quizId");
         const courseNum = urlParams.get("courseNumber");
-        const adminMode = urlParams.get("admin") === "true"; // Check for admin mode
+        const adminMode = urlParams.get("admin") === "true";
         if (quizIdFromUrl && courseNum) {
             setQuizId(quizIdFromUrl);
             setCourseNumber(courseNum);
         }
         if (adminMode) {
             setIsAdminMode(true);
-            setStudentNumber("ADMIN_TEST"); // Default for admin testing
+            setStudentNumber("ADMIN_TEST");
             setFirstNameEnglish("Admin");
             setLastNameEnglish("Test");
         }
     }, []);
 
-   // 🔁 Fetch only after quizId + courseNumber + isAdminMode are set
-   useEffect(() => {
-       if (isAdminMode && quizId && courseNumber) {
-           fetchQuiz();
-       }
-   }, [isAdminMode, quizId, courseNumber]);
-
+    useEffect(() => {
+        if (isAdminMode && quizId && courseNumber) {
+            fetchQuiz();
+        }
+    }, [isAdminMode, quizId, courseNumber]);
 
     const BACKEND_URL = "https://quiz-app-backend-jp.fly.dev";
+
     const fetchQuiz = async () => {
         if (!isAdminMode && (!studentNumber || !firstNameEnglish || !lastNameEnglish || !courseNumber || !quizId)) {
             setError("Please enter your student number, first name, last name, and ensure quiz parameters are provided.");
@@ -69,7 +68,7 @@ export default function QuizApp() {
             setError(null);
 
             const hasAudioOrVideo = data.questions.some((q) => q.audio_url || q.video_url);
-            const initialTime = hasAudioOrVideo ? 10 * 60 : 5 * 60; // Preserved original time logic
+            const initialTime = hasAudioOrVideo ? 10 * 60 : 5 * 60;
             setTimeLeft(initialTime);
         } catch (err) {
             console.error("Error fetching quiz:", err);
@@ -77,18 +76,15 @@ export default function QuizApp() {
         }
     };
 
-    // Memoize submitQuiz to prevent unnecessary re-renders and dependency issues
     const submitQuiz = useCallback(async () => {
         if (!isAdminMode && (!studentNumber || !firstNameEnglish || !lastNameEnglish)) {
             setError("Student number, first name, and last name are required.");
             return;
         }
 
-        // Prevent multiple submissions
         if (submitted) return;
 
         const submitUrl = `${BACKEND_URL}/submit_quiz/${parseInt(quizId)}${isAdminMode ? "?admin=true" : ""}`;
-        // Format answers for backend
         const formattedAnswers = {};
         Object.keys(answers).forEach((qId) => {
             formattedAnswers[qId] = answers[qId];
@@ -128,40 +124,24 @@ export default function QuizApp() {
             submitQuiz();
             return;
         }
-        const timerId = setInterval(() => setTimeLeft((prev) => prev - 1), 1000); // Preserved original timer logic
+        const timerId = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
         return () => clearInterval(timerId);
-    }, [timeLeft, submitted, submitQuiz]); // Preserved dependencies
+    }, [timeLeft, submitted, submitQuiz]);
 
     const handleTextInput = (questionId, value) => {
         console.log(`Q${questionId} - Text Input:`, value);
         setAnswers((prev) => ({ ...prev, [questionId]: value }));
     };
 
-    const handleCheckbox = (questionId, value) => {
-        const cleanValue = value.includes(": ") ? value.split(": ")[1].trim() : value.trim();
-        console.log(`Q${questionId} - Checkbox: Raw=${value}, Clean=${cleanValue}`);
-        setAnswers((prev) => {
-            const currentAnswers = Array.isArray(prev[questionId]) ? prev[questionId] : [];
-            if (currentAnswers.includes(cleanValue)) {
-                return { ...prev, [questionId]: currentAnswers.filter((ans) => ans !== cleanValue) };
-            } else {
-                return { ...prev, [questionId]: [...currentAnswers, cleanValue] };
-            }
-        });
+    const handleRadioChange = (questionId, value) => {
+        console.log(`Q${questionId} - Radio Selection:`, value);
+        setAnswers((prev) => ({ ...prev, [questionId]: value }));
     };
 
     const formatTime = (seconds) => {
         const minutes = Math.floor(seconds / 60);
         const secs = seconds % 60;
-        return `${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`; // Preserved original format
-    };
-
-    const getDirectGoogleDriveUrl = (url) => {
-        const fileIdMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
-        if (fileIdMatch) {
-            return `https://drive.google.com/uc?export=download&id=${fileIdMatch[1]}`;
-        }
-        return url;
+        return `${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
     };
 
     if (error) return <div className="quiz-container" style={{ textAlign: "center", color: "red" }}>Error: {error}</div>;
@@ -317,17 +297,15 @@ export default function QuizApp() {
                                             <div key={index} className="choice-item">
                                                 <input
                                                     type="radio"
-                                                    name={`question-${q.id}`}  // Ensures grouping
+                                                    name={`question-${q.id}`}
                                                     checked={answers[q.id] === cleanOpt}
-                                                    onChange={() => setAnswers((prev) => ({ ...prev, [q.id]: cleanOpt }))}
+                                                    onChange={() => handleRadioChange(q.id, cleanOpt)}
                                                     required
                                                 />
                                                 <span className="choice-text">{opt}</span>
                                             </div>
                                         );
                                     })}
-
-
                                 </div>
                             )}
                         </div>

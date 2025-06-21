@@ -282,72 +282,71 @@ export default function AdminQuizApp() {
                     style={{ width: "100%", marginBottom: "10px", padding: "10px", borderRadius: "4px", border: "1px solid #dadce0", fontSize: "16px" }}
                 />
                 {questions.map((q, qIndex) => (
-                    <div key={qIndex} style={{ border: "1px solid #dadce0", padding: "10px", marginBottom: "10px", borderRadius: "4px" }}>
-                        <input
+                  <div key={qIndex} style={{ border: "1px solid #dadce0", padding: "10px", marginBottom: "10px", borderRadius: "4px" }}>
+                    <input
+                      type="text"
+                      placeholder="Question Text"
+                      value={q.questionText}
+                      onChange={(e) => updateQuestion(qIndex, "questionText", e.target.value)}
+                      style={{ width: "100%", marginBottom: "5px", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
+                    />
+                    <label style={{ display: "block", marginBottom: "5px" }}>
+                      <input
+                        type="checkbox"
+                        checked={q.isTextInput}
+                        onChange={(e) => updateQuestion(qIndex, "isTextInput", e.target.checked)}
+                      />
+                      Text Input Question
+                    </label>
+                    {!q.isTextInput && (
+                      <>
+                        {q.options.map((opt, oIndex) => (
+                          <input
+                            key={oIndex}
                             type="text"
-                            placeholder="Question Text"
-                            value={q.questionText}
-                            onChange={(e) => updateQuestion(qIndex, "questionText", e.target.value)}
+                            placeholder={`Option ${oIndex + 1}`}
+                            value={opt}
+                            onChange={(e) => updateOption(qIndex, oIndex, e.target.value)}
                             style={{ width: "100%", marginBottom: "5px", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
-                        />
-                        <label style={{ display: "block", marginBottom: "5px" }}>
-                            <input
-                                type="radio"
-                                name={`question-${q.id}`}
-                                checked={answers[q.id] === cleanOpt} // Line 297
-                                onChange={() => setAnswers((prev) => ({ ...prev, [q.id]: cleanOpt }))}
-                            />
-                            Text Input Question
-                        </label>
-                        {!q.isTextInput && (
-                            <>
-                                {q.options.map((opt, oIndex) => (
-                                    <input
-                                        key={oIndex}
-                                        type="text"
-                                        placeholder={`Option ${oIndex + 1}`}
-                                        value={opt}
-                                        onChange={(e) => updateOption(qIndex, oIndex, e.target.value)}
-                                        style={{ width: "100%", marginBottom: "5px", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
-                                    />
-                                ))}
-                                <button
-                                    onClick={() => addOption(qIndex)}
-                                    style={{ padding: "4px 8px", backgroundColor: "#1a73e8", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}
-                                >
-                                    Add Option
-                                </button>
-                            </>
-                        )}
-                        <input
-                            type="text"
-                            placeholder="Correct Answers (comma-separated)"
-                            value={q.correctAnswers.join(",")}
-                            onChange={(e) => updateQuestion(qIndex, "correctAnswers", e.target.value.split(","))}
-                            style={{ width: "100%", marginBottom: "5px", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
-                        />
-                        <input
-                            type="text"
-                            placeholder="Image URL (optional)"
-                            value={q.imageUrl}
-                            onChange={(e) => updateQuestion(qIndex, "imageUrl", e.target.value)}
-                            style={{ width: "100%", marginBottom: "5px", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
-                        />
-                        <input
-                            type="text"
-                            placeholder="Audio URL (optional)"
-                            value={q.audioUrl}
-                            onChange={(e) => updateQuestion(qIndex, "audioUrl", e.target.value)}
-                            style={{ width: "100%", marginBottom: "5px", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
-                        />
-                        <input
-                            type="text"
-                            placeholder="Video URL (optional)"
-                            value={q.videoUrl}
-                            onChange={(e) => updateQuestion(qIndex, "videoUrl", e.target.value)}
-                            style={{ width: "100%", marginBottom: "5px", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
-                        />
-                    </div>
+                          />
+                        ))}
+                        <button
+                          onClick={() => addOption(qIndex)}
+                          style={{ padding: "4px 8px", backgroundColor: "#1a73e8", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}
+                        >
+                          Add Option
+                        </button>
+                      </>
+                    )}
+                    <input
+                      type="text"
+                      placeholder="Correct Answers (comma-separated)"
+                      value={q.correctAnswers.join(",")}
+                      onChange={(e) => updateQuestion(qIndex, "correctAnswers", e.target.value.split(","))}
+                      style={{ width: "100%", marginBottom: "5px", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Image URL (optional)"
+                      value={q.imageUrl}
+                      onChange={(e) => updateQuestion(qIndex, "imageUrl", e.target.value)}
+                      style={{ width: "100%", marginBottom: "5px", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Audio URL (optional)"
+                      value={q.audioUrl}
+                      onChange={(e) => updateQuestion(qIndex, "audioUrl", e.target.value)}
+                      style={{ width: "100%", marginBottom: "5px", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Video URL (optional)"
+                      value={q.videoUrl}
+                      onChange={(e) => updateQuestion(qIndex, "videoUrl", e.target.value)}
+                      style={{ width: "100%", marginBottom: "5px", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
+                    />
+                  </div>
                 ))}
                 <div style={{ display: "flex", justifyContent: "space-between", marginTop: "20px" }}>
                     <button
