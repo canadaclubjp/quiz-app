@@ -51,8 +51,8 @@ export default function AdminQuizApp() {
             setEditingQuizId(quizId);
             setError(null);
         } catch (err) {
-            console.error("Error fetching quiz details:", err.response ? err. response.data : err.message);
-            setError(`Failed to fetch details for quiz ${quizID}: ${err.message}`);
+            console.error("Error fetching quiz details:", err.response ? err.response.data : err.message);
+            setError(`Failed to fetch details for quiz ${quizId}: ${err.message}`);
         }
     };
 
