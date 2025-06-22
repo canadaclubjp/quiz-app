@@ -1,6 +1,6 @@
 {
   "name": "quiz-frontend",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "private": true,
   "dependencies": {
     "axios": "^1.8.4",
