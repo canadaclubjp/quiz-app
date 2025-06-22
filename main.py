@@ -849,7 +849,7 @@ async def check_question(question_id: int, db: Session = Depends(get_db)):
         "is_text_input": question.is_text_input
     }
 
-
+# Comments added for testing
 # Also modify your submit_quiz endpoint to return debug info (replace the return statement at the end):
 # Change this line at the end of submit_quiz:
 # return {"score": score, "total": total}
