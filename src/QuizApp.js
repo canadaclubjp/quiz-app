@@ -293,6 +293,7 @@ export default function QuizApp() {
                                         const cleanOpt = opt.includes(": ")
                                             ? opt.split(": ")[1].trim()
                                             : opt.trim();
+                                        const inputElement = document.querySelector(`input[name="question-${q.id}"]`);
                                         console.log("Rendering Q", q.id, "option", opt, "with type", "radio");
                                         return (
                                             <div key={index} className="choice-item">
@@ -300,7 +301,7 @@ export default function QuizApp() {
                                                     type="radio"
                                                     name={`question-${q.id}`}
                                                     checked={answers[q.id] === cleanOpt}
-                                                    onChange={() => handleRadioChange(q.id, cleanOpt)}
+                                                    onChange={() => setAnswers((prev) => ({ ...prev, [q.id]: cleanOpt }))}
                                                     required
                                                 />
                                                 <span className="choice-text">{opt}</span>
