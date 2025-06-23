@@ -197,15 +197,11 @@ video {
 }
 
 /* === Accessibility === */
-.choice-item input[type="checkbox"]:focus {
-  outline: 2px solid #1a73e8;
+.choice-item input[type="radio"]:focus {
+    outline: 2px solid #1a73e8;
 }
 .text-input:focus,
 .signin-input:focus {
-  outline: 2px solid #1a73e8;
-  border-color: #1a73e8;
-}
-.signin-button:focus,
-.submit-button:focus {
-  outline: 2px solid #1a73e8;
+    outline: 2px solid #1a73e8;
+    border-color: #1a73e8;
 }
