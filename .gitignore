@@ -1,1 +1,39 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+
+# Node.js dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Build directories
+build/
+dist/
+
+# Testing
+/coverage
+
+# Misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Vercel
 .vercel
+
+# Allow specific database files
+!quiz.db
+!quizzes.db

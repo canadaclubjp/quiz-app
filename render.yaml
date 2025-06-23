@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: quiz-backend
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9
+      - key: FRONTEND_URL
+        sync: false # Set manually after frontend deployment
+    disk:
+      name: quiz-data
+      mountPath: /app/quiz.db
+      sizeGB: 1
+  - type: web
+    name: quiz-frontend
+    env: static
+    plan: free
+    buildCommand: npm install && npm run build
+    staticPublishPath: build
+    pullRequestPreviewsEnabled: false
