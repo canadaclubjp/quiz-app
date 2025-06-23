@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import "./QuizApp.css";
 
+// Added comments to force redeploy due to minor change
+
 export default function QuizApp() {
     const [quiz, setQuiz] = useState(null);
     const [answers, setAnswers] = useState({});
@@ -337,4 +339,4 @@ export default function QuizApp() {
             )}
         </div>
     );
-}
+}// Force redeploy
