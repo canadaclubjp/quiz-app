@@ -1,10 +1,19 @@
+/* === QuizApp.css === */
+
 .quiz-container {
+  width: 100%;
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
-  text-align: left;
+  box-sizing: border-box;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #E6E6FA;
 }
 
+/* === Sign-in === */
 .signin-container {
   max-width: 400px;
   margin: 0 auto;
@@ -17,189 +26,186 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.signin-input {
-  margin-bottom: 10px;
-  width: 200px;
-  padding: 8px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
+.signin-input,
+.signin-button {
+  width: 100%;
+  max-width: 300px;
+  padding: 10px;
+  border-radius: 6px;
   font-size: 16px;
+  margin-bottom: 10px;
+}
+
+.signin-input {
+  border: 1px solid #ccc;
 }
 
 .signin-button {
-  width: 200px;
-  padding: 8px;
   background-color: #4CAF50;
   color: white;
   border: none;
-  border-radius: 4px;
   cursor: pointer;
-  font-size: 16px;
+  transition: background 0.3s;
+}
+.signin-button:hover {
+  background-color: #45a049;
 }
 
+/* === Question Block === */
 .question-block {
   background: white;
   border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 15px;
-  margin-bottom: 15px;
-  width: 100%;
-  max-width: 600px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  text-align: left;
-  box-sizing: border-box;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
-.choices {
-  margin-top: 10px;
-  width: 100%;
+.question-block h3 {
+  font-size: 18px;
+  margin-bottom: 12px;
+  color: #333;
 }
 
+/* === Choices === */
 .choice-item {
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
-  width: 100%;
-  box-sizing: border-box;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 4px; /* consistent padding */
+  border-radius: 4px; /* consistent radius */
 }
 
-.choice-label {
-  margin-right: 10px;
-  display: inline-flex; /* Keep checkbox inline with the label */
-  align-items: center;
-}
-
-.choice-label input[type="checkbox"] {
-  margin: 0;
-}
 
 .choice-text {
   font-size: 16px;
-  text-align: left;
-  word-wrap: break-word;
-  max-width: calc(100% - 30px); /* Account for checkbox width */
-  display: inline-block; /* Ensure text stays inline with checkbox */
+  color: #333;
+  line-height: 1.5;
+  flex: 1;
 }
 
+.choice-item:hover {
+  background-color: #f0f0ff;
+}
+
+.choice-item input[type="radio"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #4CAF50;
+}
+
+/* === Text Input === */
 .text-input {
   width: 100%;
-  padding: 8px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
+  padding: 10px;
   font-size: 16px;
-  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 6px;
 }
 
-.media {
+/* === Buttons === */
+.submit-button {
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background 0.3s;
+}
+.submit-button:hover {
+  background-color: #45a049;
+}
+
+/* === Status Messages === */
+.result,
+.error,
+.loading {
+  text-align: center;
+  padding: 20px;
+  font-size: 16px;
+}
+
+.error {
+  color: red;
+}
+
+/* === Timer === */
+.timer {
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+/* === Media === */
+img,
+audio,
+video {
   max-width: 100%;
   margin-top: 10px;
 }
 
-.timer {
-  margin-bottom: 20px;
-  font-size: 18px;
-  font-weight: bold;
-}
-
-.submit-button {
-  padding: 8px 16px;
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-.result {
-  text-align: left;
-}
-
-.error {
-  text-align: left;
-  color: red;
-  padding: 20px;
-}
-
-.loading {
-  text-align: left;
-  padding: 20px;
-}
-
-/* Responsive Design */
+/* === Responsive Styles === */
 @media (max-width: 768px) {
-  .quiz-container {
-    max-width: 100%;
-    padding: 10px;
-  }
-
+  .quiz-container,
   .signin-container {
-    max-width: 100%;
     padding: 10px;
   }
-
   .question-block {
-    padding: 10px;
-    margin-bottom: 10px;
+    padding: 12px;
   }
-
   .choice-item {
-    margin-bottom: 8px;
+    gap: 10px;
   }
-
   .choice-text {
-    font-size: 14px;
+    font-size: 15px;
   }
-
-  .text-input {
-    font-size: 14px;
-  }
-
-  .signin-input {
-    width: 100%;
-    max-width: 300px;
-    font-size: 14px;
-  }
-
+  .submit-button,
   .signin-button {
-    width: 100%;
-    max-width: 300px;
-    font-size: 14px;
-  }
-
-  .submit-button {
-    width: 100%;
-    max-width: 300px;
-    font-size: 14px;
-  }
-
-  h1 {
-    font-size: 24px;
-  }
-
-  h3 {
-    font-size: 18px;
+    font-size: 15px;
   }
 }
 
 @media (max-width: 480px) {
   .question-block {
-    padding: 8px;
+    padding: 10px;
   }
-
+  .choice-item {
+    flex-direction: row;
+    align-items: flex-start;
+  }
   .choice-text {
-    font-size: 12px;
+    font-size: 14px;
   }
-
-  .text-input {
-    font-size: 12px;
+  .text-input,
+  .signin-input,
+  .submit-button {
+    font-size: 14px;
   }
 
   h1 {
     font-size: 20px;
   }
-
   h3 {
     font-size: 16px;
   }
+}
+
+/* === Accessibility === */
+.choice-item input[type="checkbox"]:focus {
+  outline: 2px solid #1a73e8;
+}
+.text-input:focus,
+.signin-input:focus {
+  outline: 2px solid #1a73e8;
+  border-color: #1a73e8;
+}
+.signin-button:focus,
+.submit-button:focus {
+  outline: 2px solid #1a73e8;
 }

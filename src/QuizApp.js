@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import './QuizApp.css';
+import React, { useState, useEffect, useCallback } from "react";
+import "./QuizApp.css";
 
 export default function QuizApp() {
     const [quiz, setQuiz] = useState(null);
@@ -15,23 +15,39 @@ export default function QuizApp() {
     const [score, setScore] = useState(null);
     const [total, setTotal] = useState(null);
     const [timeLeft, setTimeLeft] = useState(null);
+    const [isAdminMode, setIsAdminMode] = useState(false);
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const quizIdFromUrl = urlParams.get("quizId");
         const courseNum = urlParams.get("courseNumber");
+        const adminMode = urlParams.get("admin") === "true";
         if (quizIdFromUrl && courseNum) {
             setQuizId(quizIdFromUrl);
             setCourseNumber(courseNum);
         }
+        if (adminMode) {
+            setIsAdminMode(true);
+            setStudentNumber("ADMIN_TEST");
+            setFirstNameEnglish("Admin");
+            setLastNameEnglish("Test");
+        }
     }, []);
 
+    useEffect(() => {
+        if (isAdminMode && quizId && courseNumber) {
+            fetchQuiz();
+        }
+    }, [isAdminMode, quizId, courseNumber]);
+
+    const BACKEND_URL = "https://quiz-app-backend-jp.fly.dev";
+
     const fetchQuiz = async () => {
-        if (!studentNumber || !firstNameEnglish || !lastNameEnglish || !courseNumber || !quizId) {
+        if (!isAdminMode && (!studentNumber || !firstNameEnglish || !lastNameEnglish || !courseNumber || !quizId)) {
             setError("Please enter your student number, first name, last name, and ensure quiz parameters are provided.");
             return;
         }
-        const url = `https://quiz-app-backend-jp.fly.dev/quiz/${parseInt(quizId)}?student_number=${studentNumber}&course_number=${courseNumber}`;
+        const url = `${BACKEND_URL}/quiz/${parseInt(quizId)}?student_number=${studentNumber}&course_number=${courseNumber}${isAdminMode ? "&admin=true" : ""}`;
         try {
             const response = await fetch(url);
             if (!response.ok) {
@@ -39,7 +55,7 @@ export default function QuizApp() {
                 throw new Error(`HTTP error! status: ${response.status}, details: ${errorText}`);
             }
             const data = await response.json();
-            if (data.message === "You have already taken this quiz.") {
+            if (data.message === "You have already taken this quiz." && !isAdminMode) {
                 setSubmitted(true);
                 setScore(data.score);
                 setTotal(data.total);
@@ -60,40 +76,15 @@ export default function QuizApp() {
         }
     };
 
-    useEffect(() => {
-        if (timeLeft === null || submitted) return;
-        if (timeLeft <= 0) {
-            submitQuiz();
-            return;
-        }
-        const timerId = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
-        return () => clearInterval(timerId);
-    }, [timeLeft, submitted]);
-
-    const handleTextInput = (questionId, value) => {
-        console.log(`Q${questionId} - Text Input:`, value);
-        setAnswers((prev) => ({ ...prev, [questionId]: value }));
-    };
-
-    const handleCheckbox = (questionId, value) => {
-        const cleanValue = value.includes(": ") ? value.split(": ")[1].trim() : value.trim();
-        console.log(`Q${questionId} - Checkbox: Raw=${value}, Clean=${cleanValue}`);
-        setAnswers((prev) => {
-            const currentAnswers = Array.isArray(prev[questionId]) ? prev[questionId] : [];
-            if (currentAnswers.includes(cleanValue)) {
-                return { ...prev, [questionId]: currentAnswers.filter((ans) => ans !== cleanValue) };
-            } else {
-                return { ...prev, [questionId]: [...currentAnswers, cleanValue] };
-            }
-        });
-    };
-
-    const submitQuiz = async () => {
-        if (!studentNumber || !firstNameEnglish || !lastNameEnglish) {
+    const submitQuiz = useCallback(async () => {
+        if (!isAdminMode && (!studentNumber || !firstNameEnglish || !lastNameEnglish)) {
             setError("Student number, first name, and last name are required.");
             return;
         }
-        const submitUrl = `https://quiz-app-backend-jp.fly.dev/submit_quiz/${parseInt(quizId)}`;
+
+        if (submitted) return;
+
+        const submitUrl = `${BACKEND_URL}/submit_quiz/${parseInt(quizId)}${isAdminMode ? "?admin=true" : ""}`;
         const formattedAnswers = {};
         Object.keys(answers).forEach((qId) => {
             formattedAnswers[qId] = answers[qId];
@@ -125,6 +116,26 @@ export default function QuizApp() {
             console.error("Error submitting quiz:", err);
             setError(err.message);
         }
+    }, [studentNumber, firstNameEnglish, lastNameEnglish, courseNumber, quizId, answers, submitted]);
+
+    useEffect(() => {
+        if (timeLeft === null || submitted) return;
+        if (timeLeft <= 0) {
+            submitQuiz();
+            return;
+        }
+        const timerId = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
+        return () => clearInterval(timerId);
+    }, [timeLeft, submitted, submitQuiz]);
+
+    const handleTextInput = (questionId, value) => {
+        console.log(`Q${questionId} - Text Input:`, value);
+        setAnswers((prev) => ({ ...prev, [questionId]: value }));
+    };
+
+    const handleRadioChange = (questionId, value) => {
+        console.log(`Q${questionId} - Radio Selection:`, value);
+        setAnswers((prev) => ({ ...prev, [questionId]: value }));
     };
 
     const formatTime = (seconds) => {
@@ -133,71 +144,111 @@ export default function QuizApp() {
         return `${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
     };
 
-    const getDirectGoogleDriveUrl = (url) => {
-        const fileIdMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
-        if (fileIdMatch) {
-            return `https://drive.google.com/uc?export=download&id=${fileIdMatch[1]}`;
-        }
-        return url;
-    };
+    if (error) return <div className="quiz-container" style={{ textAlign: "center", color: "red" }}>Error: {error}</div>;
 
-    if (error) return <div className="error">Error: {error}</div>;
-
-    if (!isStudentIdEntered) {
+    if (!isStudentIdEntered && !isAdminMode) {
         return (
-            <div className="signin-container">
+            <div className="quiz-container">
                 <h1>Enter Student Information</h1>
-                <input
-                    type="text"
-                    placeholder="Student Number (required)"
-                    value={studentNumber}
-                    onChange={(e) => setStudentNumber(e.target.value)}
-                    required
-                    className="signin-input"
-                />
-                <input
-                    type="text"
-                    placeholder="First Name (English) (required)"
-                    value={firstNameEnglish}
-                    onChange={(e) => setFirstNameEnglish(e.target.value)}
-                    required
-                    className="signin-input"
-                />
-                <input
-                    type="text"
-                    placeholder="Last Name (English) (required)"
-                    value={lastNameEnglish}
-                    onChange={(e) => setLastNameEnglish(e.target.value)}
-                    required
-                    className="signin-input"
-                />
-                <button onClick={fetchQuiz} className="signin-button">Start Quiz</button>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}>
+                    <input
+                        type="text"
+                        placeholder="Student Number (required)"
+                        value={studentNumber}
+                        onChange={(e) => setStudentNumber(e.target.value)}
+                        required
+                        style={{
+                            marginBottom: "10px",
+                            width: "200px",
+                            padding: "8px",
+                            borderRadius: "4px",
+                            border: "1px solid #ccc",
+                        }}
+                    />
+                    <input
+                        type="text"
+                        placeholder="First Name (English) (required)"
+                        value={firstNameEnglish}
+                        onChange={(e) => setFirstNameEnglish(e.target.value)}
+                        required
+                        style={{
+                            marginBottom: "10px",
+                            width: "200px",
+                            padding: "8px",
+                            borderRadius: "4px",
+                            border: "1px solid #ccc",
+                        }}
+                    />
+                    <input
+                        type="text"
+                        placeholder="Last Name (English) (required)"
+                        value={lastNameEnglish}
+                        onChange={(e) => setLastNameEnglish(e.target.value)}
+                        required
+                        style={{
+                            marginBottom: "10px",
+                            width: "200px",
+                            padding: "8px",
+                            borderRadius: "4px",
+                            border: "1px solid #ccc",
+                        }}
+                    />
+                    <button
+                        onClick={fetchQuiz}
+                        style={{
+                            width: "200px",
+                            padding: "8px",
+                            backgroundColor: "#4CAF50",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "4px",
+                            cursor: "pointer",
+                        }}
+                    >
+                        Start Quiz
+                    </button>
+                </div>
             </div>
         );
     }
 
-    if (!quiz) return <div className="loading">Loading...</div>;
+    if (!quiz) return <div className="quiz-container" style={{ textAlign: "center" }}>Loading...</div>;
 
     return (
         <div className="quiz-container">
-            <h1>{quiz.title}</h1>
+            <h1 style={{ marginBottom: "20px" }}>{quiz.title}</h1>
             {!submitted ? (
                 <>
-                    <div className="timer">
-                        Time Left: {formatTime(timeLeft)}
-                    </div>
-                    {quiz.questions.map((q) => (
-                        <div key={q.id} className="question-block">
+                    {timeLeft !== null && (
+                        <div style={{ marginBottom: "20px", fontSize: "18px", fontWeight: "bold" }}>
+                            Time Left: {formatTime(timeLeft)}
+                        </div>
+                    )}
+                    {quiz.questions && quiz.questions.map((q) => (
+                        <div
+                            key={q.id}
+                            style={{
+                                border: "1px solid #ccc",
+                                padding: "10px",
+                                marginBottom: "10px",
+                                width: "100%",
+                                maxWidth: "600px",
+                            }}
+                        >
                             <h3>{q.question_text}</h3>
                             {q.image_url && (
                                 <img
                                     src={
                                         q.image_url.includes("drive.google.com")
-                                            ? `https://quiz-app-backend-jp.fly.dev/proxy_media/?url=${encodeURIComponent(q.image_url)}`
+                                            ? `${BACKEND_URL}/proxy_media/?url=${encodeURIComponent(q.image_url)}`
                                             : q.image_url
                                     }
                                     alt="Question media"
-                                    className="media"
+                                    style={{ maxWidth: "100%" }}
+                                    onError={(e) => {
+                                        console.error("Image failed to load:", q.image_url);
+                                        e.target.style.display = 'none';
+                                    }}
                                 />
                             )}
                             {q.audio_url && (
@@ -206,19 +257,19 @@ export default function QuizApp() {
                                     onError={(e) => console.error("Audio element error:", e.target.error)}
                                 >
                                     <source
-                                        src={`https://quiz-app-backend-jp.fly.dev/proxy_media/?url=${encodeURIComponent(q.audio_url)}`}
+                                        src={`${BACKEND_URL}/proxy_media/?url=${encodeURIComponent(q.audio_url)}`}
                                         type="audio/mpeg"
                                     />
                                     Your browser does not support the audio element.
                                 </audio>
                             )}
                             {q.video_url && (
-                                <video controls className="media">
+                                <video controls style={{ maxWidth: "100%" }}>
                                     <source
                                         src={
                                             q.video_url.includes("catbox.moe")
                                                 ? q.video_url
-                                                : `https://quiz-app-backend-jp.fly.dev/proxy_media/?url=${encodeURIComponent(q.video_url)}`
+                                                : `${BACKEND_URL}/proxy_media/?url=${encodeURIComponent(q.video_url)}`
                                         }
                                     />
                                     Your browser does not support the video element.
@@ -229,27 +280,31 @@ export default function QuizApp() {
                                     type="text"
                                     value={answers[q.id] || ""}
                                     onChange={(e) => handleTextInput(q.id, e.target.value)}
-                                    className="text-input"
+                                    style={{
+                                        width: "100%",
+                                        padding: "8px",
+                                        borderRadius: "4px",
+                                        border: "1px solid #ccc",
+                                    }}
                                 />
                             ) : (
-                                <div className="choices">
-                                    {q.options.map((opt, index) => {
-                                        const displayValue = opt.includes(": ") ? opt.split(": ")[1].trim() : opt.trim();
-                                        const cleanValue = displayValue;
-                                        console.log(`Option ${index} - Raw: ${opt}, Display: ${displayValue}`);
+                                <div>
+                                    {q.options && q.options.map((opt, index) => {
+                                        const cleanOpt = opt.includes(": ")
+                                            ? opt.split(": ")[1].trim()
+                                            : opt.trim();
+                                        const inputElement = document.querySelector(`input[name="question-${q.id}"]`);
+                                        console.log("Rendering Q", q.id, "option", opt, "with type", "radio");
                                         return (
                                             <div key={index} className="choice-item">
-                                                <div className="choice-label">
-                                                    <input
-                                                        type="checkbox"
-                                                        id={`option-${q.id}-${index}`}
-                                                        checked={answers[q.id]?.includes(cleanValue) || false}
-                                                        onChange={() => handleCheckbox(q.id, opt)}
-                                                    />
-                                                </div>
-                                                <label htmlFor={`option-${q.id}-${index}`} className="choice-text">
-                                                    {displayValue}
-                                                </label>
+                                                <input
+                                                    type="radio"
+                                                    name={`question-${q.id}`}
+                                                    checked={answers[q.id] === cleanOpt}
+                                                    onChange={() => setAnswers((prev) => ({ ...prev, [q.id]: cleanOpt }))}
+                                                    required
+                                                />
+                                                <span className="choice-text">{opt}</span>
                                             </div>
                                         );
                                     })}
@@ -257,12 +312,27 @@ export default function QuizApp() {
                             )}
                         </div>
                     ))}
-                    <button onClick={submitQuiz} className="submit-button">Submit Quiz</button>
+                    <button
+                        onClick={submitQuiz}
+                        disabled={submitted}
+                        style={{
+                            padding: "8px 16px",
+                            backgroundColor: submitted ? "#ccc" : "#4CAF50",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "4px",
+                            cursor: submitted ? "not-allowed" : "pointer",
+                        }}
+                    >
+                        {submitted ? "Submitting..." : "Submit Quiz"}
+                    </button>
                 </>
             ) : (
-                <div className="result">
+                <div style={{ textAlign: "center" }}>
                     <h2>Quiz Submitted!</h2>
-                    <p>Your score: {score}/{total}</p>
+                    <p>
+                        Your score: {score}/{total}
+                    </p>
                 </div>
             )}
         </div>
