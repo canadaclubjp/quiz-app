@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import "./QuizApp.css";
 
 // Force clean redeploy - Added at 11:27 AM JST, June 25, 2025
