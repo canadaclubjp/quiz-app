@@ -556,6 +556,7 @@ async def submit_quiz(quiz_id: int, submission: AnswerSubmission, admin: bool = 
         # Strip prefixes (e.g., "A:", "D:") from both student answers and correct answers
         def strip_prefix(answer):
             if isinstance(answer, str):
+                answer = answer.strip()
                 for sep in [": ", ":"]:
                     if sep in answer:
                         return answer.split(sep, 1)[-1].strip()
@@ -567,32 +568,28 @@ async def submit_quiz(quiz_id: int, submission: AnswerSubmission, admin: bool = 
 
         if q.is_text_input:
             if isinstance(student_answer, str):
-                student_answer = student_answer
-            elif isinstance(student_answer, list) and student_answer:
-                student_answer = student_answer[0]
+                student_answer_cleaned = strip_prefix(student_answer).lower()
+                logging.info(f"Text answer cleaned: '{student_answer_cleaned}")
+                if student_answer_cleaned in [ans.lower() for ans in correct_cleaned]:
+                    score += 1
+                    logger.info(f"Q{q.id}: TEXT CORRECT - Score incremented to {score}")
+                else:
+                    logging.info(f"Q{q.id}: TEXT INCORRECT")
             else:
-                student_answer = ""
-            student_answer_cleaned = strip_prefix(student_answer)
-            logging.info(f"Text answer cleaned: '{student_answer_cleaned}'")
-            if student_answer_cleaned.lower() in [ans.lower() for ans in correct_cleaned]:
-                score += 1
-                logging.info(f"Q{q.id}: TEXT CORRECT - Score incremented to {score}")
-            else:
-                logging.info(f"Q{q.id}: TEXT INCORRECT")
+                logging.info(f"Q{q.id}: TEXT INVALID ANSWER TYPE - Got {type(student_answer)}")
+
         else:
             # Multiple choice processing - FIXED for radio buttons (single selection)
-            if isinstance(student_answer, list) and student_answer:
-                student_answer = student_answer[0]  # take the first answer if somehow it's an array
-            elif not isinstance(student_answer, str):
-                student_answer = ""
-            student_answer_cleaned = strip_prefix(student_answer)
-            logging.info(f"MC answer cleaned: '{student_answer_cleaned}'")
-
-            if student_answer_cleaned in correct_cleaned:
-                score += 1
-                logging.info(f"Q{q.id}: MC CORRECT - Score incremented to {score}")
+            if isinstance(student_answer, str):
+                student_answer_cleaned = strip_prefix(student_answer)
+                logging.info(f"MC answer cleaned: '{student_answer_cleaned}'")
+                if student_answer_cleaned in correct_cleaned:
+                    score += 1
+                    logging.info(f"Q{q.id}: MC CORRECT - Score incremented to {score}")
+                else:
+                    logging.info(f"Q{q.id}: MC INCORRECT - Expected one of {correct_cleaned}, Got '{student_answer_cleaned}'")
             else:
-                logging.info(f"Q{q.id}: MC INCORRECT - Expected one of {correct_cleaned}, Got '{student_answer_cleaned}'")
+                logging.info(f"Q{q.id}: MC INVALID ANSWER TYPE - Got {type(student_answer)}")
 
         logging.info(f"=== END Q{q.id} DEBUG ===")
 
@@ -628,7 +625,10 @@ async def submit_quiz(quiz_id: int, submission: AnswerSubmission, admin: bool = 
             logger.error(f"Error saving quiz submission: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Failed to save submission: {str(e)}")
 
-    return {"score": score, "total": total}
+    return {"score": score,
+            "total": total,
+            "debug": {f"question_{q.id}_raw_correct": correct for q in questions},
+    }
 
 
 @app.post("/add_quiz/")
