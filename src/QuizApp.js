@@ -136,6 +136,12 @@ export default function QuizApp() {
         setAnswers((prev) => ({ ...prev, [questionId]: value }));
     };
 
+    const renderCount = useRef(0);
+    useEffect(() => {
+      renderCount.current += 1;
+      console.log("Render count:", renderCount.current, "for quiz:", quizId);
+    }, [quizId]); // Trigger only on quizId change
+
     const handleRadioChange = (questionId, value) => {
         console.log(`Q${questionId} - Radio Selection:`, value, "Updating answers:", { [questionId]: value });
         setAnswers((prev) => ({ ...prev, [questionId]: value }));
@@ -297,7 +303,7 @@ export default function QuizApp() {
                                             ? opt.split(": ")[1].trim()
                                             : opt.trim();
                                         const inputElement = document.querySelector(`input[name="question-${q.id}"]`);
-                                        console.log("Rendering Q", q.id, "option", opt, "with type", "radio");
+                                        console.log("Rendering Q", q.id, "option", opt, "index", index, "with type", "radio");
                                         return (
                                             <div key={index} className="choice-item">
                                                 <input
