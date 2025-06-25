@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import "./QuizApp.css";
 
+// Force clean redeploy - Added at 11:27 AM JST, June 25, 2025
+
 export default function QuizApp() {
     const [quiz, setQuiz] = useState(null);
     const [answers, setAnswers] = useState({});
