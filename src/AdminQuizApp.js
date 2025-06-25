@@ -3,7 +3,7 @@ import axios from "axios";
 import "./AdminQuizApp.css";
 
 export default function AdminQuizApp() {
-    const [quizzes, setQuizzes] = useState([]);
+    const [quizzes, setQuizzes] = useState([]); // Initialize as an empty array
     const [selectedQuizId, setSelectedQuizId] = useState("");
     const [quizTitle, setQuizTitle] = useState("");
     const [quizDescription, setQuizDescription] = useState("");
@@ -17,11 +17,14 @@ export default function AdminQuizApp() {
     const fetchQuizzes = async () => {
         try {
             const response = await axios.get("https://quiz-app-backend-jp.fly.dev/quizzes/");
-            setQuizzes(response.data);
+            // Ensure response.data is an array; if not, set to empty array
+            const data = Array.isArray(response.data) ? response.data : [];
+            setQuizzes(data);
             setError(null);
         } catch (err) {
             console.error("Error fetching quizzes:", err);
             setError(err.message);
+            setQuizzes([]); // Reset to empty array on error
         }
     };
 
@@ -33,6 +36,7 @@ export default function AdminQuizApp() {
         if (!quizId) return;
         try {
             const response = await axios.get(`https://quiz-app-backend-jp.fly.dev/quiz_details/${quizId}`);
+            console.log("Quiz details response:", response.data)
             setQuizTitle(response.data.title);
             setQuizDescription(response.data.description);
             setQuestions(response.data.questions.map(q => ({
@@ -47,8 +51,8 @@ export default function AdminQuizApp() {
             setEditingQuizId(quizId);
             setError(null);
         } catch (err) {
-            console.error("Error fetching quiz details:", err);
-            setError(err.message);
+            console.error("Error fetching quiz details:", err.response ? err.response.data : err.message);
+            setError(`Failed to fetch details for quiz ${quizId}: ${err.message}`);
         }
     };
 
@@ -74,8 +78,10 @@ export default function AdminQuizApp() {
                 video_url: q.videoUrl || ""
             }))
         };
-        console.log("Submitting quiz data:", quizData);
-        const url = editingQuizId ? `https://quiz-app-backend-jp.fly.dev/update_quiz/${editingQuizId}` : "https://quiz-app-backend-jp.fly.dev/add_quiz/";
+        // Fix the URL selection using a proper ternary operator
+        const url = editingQuizId
+            ? `https://quiz-app-backend-jp.fly.dev/update_quiz/${editingQuizId}`
+            : "https://quiz-app-backend-jp.fly.dev/add_quiz/";
         const method = editingQuizId ? "PUT" : "POST";
 
         try {
@@ -83,7 +89,7 @@ export default function AdminQuizApp() {
                 method,
                 url,
                 data: quizData,
-                headers: { "Content-Type": "application/json" },
+                headers: { "Content-Type": "application/json" }
             });
             resetForm();
             setShowQuizList(true);
@@ -109,14 +115,7 @@ export default function AdminQuizApp() {
             setError(null);
         } catch (err) {
             console.error("Error deleting quiz:", err);
-            let errorMessage;
-            try {
-                const parsedError = JSON.parse(err.message);
-                errorMessage = parsedError.detail || err.message;
-            } catch {
-                errorMessage = err.message;
-            }
-            setError(`Failed to delete quiz: ${errorMessage}`);
+            setError(`Failed to delete quiz: ${err.message}`); // Fix error message
         }
     };
 
@@ -147,7 +146,6 @@ export default function AdminQuizApp() {
             return;
         }
         const qrUrl = `https://quiz-app-backend-jp.fly.dev/generate_qr/${selectedQuizId}/${cleanCourseNumber}`;
-        axios.get(qrUrl, { responseType: 'blob' })
         axios.get(qrUrl, { responseType: 'blob' })
             .then(response => {
                 const blob = new Blob([response.data], { type: 'image/png' });
@@ -201,6 +199,7 @@ export default function AdminQuizApp() {
         return (
             <div className="admin-container">
                 <h1 style={{ fontSize: "24px", color: "#202124" }}>Your Quizzes</h1>
+                {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
                 <button
                     onClick={() => {
                         setShowQuizList(false);
@@ -212,19 +211,23 @@ export default function AdminQuizApp() {
                     Create New Quiz
                 </button>
                 <ul className="quiz-list">
-                    {quizzes.map(quiz => (
-                        <li key={quiz.id}>
-                            <a
-                                onClick={() => {
-                                    setShowQuizList(false);
-                                    setSelectedQuizId(quiz.id);
-                                    fetchQuizDetails(quiz.id);
-                                }}
-                            >
-                                {`${quiz.id} - ${quiz.title} - ${new Date(quiz.created_at).toLocaleDateString()}`}
-                            </a>
-                        </li>
-                    ))}
+                    {quizzes.length === 0 ? (
+                        <li>No quizzes available.</li>
+                    ) : (
+                        quizzes.map(quiz => (
+                            <li key={quiz.id}>
+                                <a
+                                    onClick={() => {
+                                        setShowQuizList(false);
+                                        setSelectedQuizId(quiz.id);
+                                        fetchQuizDetails(quiz.id);
+                                    }}
+                                >
+                                    {`${quiz.id} - ${quiz.title} - ${new Date(quiz.created_at).toLocaleDateString()}`}
+                                </a>
+                            </li>
+                        ))
+                    )}
                 </ul>
             </div>
         );
@@ -280,71 +283,71 @@ export default function AdminQuizApp() {
                     style={{ width: "100%", marginBottom: "10px", padding: "10px", borderRadius: "4px", border: "1px solid #dadce0", fontSize: "16px" }}
                 />
                 {questions.map((q, qIndex) => (
-                    <div key={qIndex} style={{ border: "1px solid #dadce0", padding: "10px", marginBottom: "10px", borderRadius: "4px" }}>
-                        <input
+                  <div key={qIndex} style={{ border: "1px solid #dadce0", padding: "10px", marginBottom: "10px", borderRadius: "4px" }}>
+                    <input
+                      type="text"
+                      placeholder="Question Text"
+                      value={q.questionText}
+                      onChange={(e) => updateQuestion(qIndex, "questionText", e.target.value)}
+                      style={{ width: "100%", marginBottom: "5px", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
+                    />
+                    <label style={{ display: "block", marginBottom: "5px" }}>
+                      <input
+                        type="checkbox"
+                        checked={q.isTextInput}
+                        onChange={(e) => updateQuestion(qIndex, "isTextInput", e.target.checked)}
+                      />
+                      Text Input Question
+                    </label>
+                    {!q.isTextInput && (
+                      <>
+                        {q.options.map((opt, oIndex) => (
+                          <input
+                            key={oIndex}
                             type="text"
-                            placeholder="Question Text"
-                            value={q.questionText}
-                            onChange={(e) => updateQuestion(qIndex, "questionText", e.target.value)}
+                            placeholder={`Option ${oIndex + 1}`}
+                            value={opt}
+                            onChange={(e) => updateOption(qIndex, oIndex, e.target.value)}
                             style={{ width: "100%", marginBottom: "5px", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
-                        />
-                        <label style={{ display: "block", marginBottom: "5px" }}>
-                            <input
-                                type="checkbox"
-                                checked={q.isTextInput}
-                                onChange={(e) => updateQuestion(qIndex, "isTextInput", e.target.checked)}
-                            />
-                            Text Input Question
-                        </label>
-                        {!q.isTextInput && (
-                            <>
-                                {q.options.map((opt, oIndex) => (
-                                    <input
-                                        key={oIndex}
-                                        type="text"
-                                        placeholder={`Option ${oIndex + 1}`}
-                                        value={opt}
-                                        onChange={(e) => updateOption(qIndex, oIndex, e.target.value)}
-                                        style={{ width: "100%", marginBottom: "5px", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
-                                    />
-                                ))}
-                                <button
-                                    onClick={() => addOption(qIndex)}
-                                    style={{ padding: "4px 8px", backgroundColor: "#1a73e8", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}
-                                >
-                                    Add Option
-                                </button>
-                            </>
-                        )}
-                        <input
-                            type="text"
-                            placeholder="Correct Answers (comma-separated)"
-                            value={q.correctAnswers.join(",")}
-                            onChange={(e) => updateQuestion(qIndex, "correctAnswers", e.target.value.split(","))}
-                            style={{ width: "100%", marginBottom: "5px", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
-                        />
-                        <input
-                            type="text"
-                            placeholder="Image URL (optional)"
-                            value={q.imageUrl}
-                            onChange={(e) => updateQuestion(qIndex, "imageUrl", e.target.value)}
-                            style={{ width: "100%", marginBottom: "5px", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
-                        />
-                        <input
-                            type="text"
-                            placeholder="Audio URL (optional)"
-                            value={q.audioUrl}
-                            onChange={(e) => updateQuestion(qIndex, "audioUrl", e.target.value)}
-                            style={{ width: "100%", marginBottom: "5px", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
-                        />
-                        <input
-                            type="text"
-                            placeholder="Video URL (optional)"
-                            value={q.videoUrl}
-                            onChange={(e) => updateQuestion(qIndex, "videoUrl", e.target.value)}
-                            style={{ width: "100%", marginBottom: "5px", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
-                        />
-                    </div>
+                          />
+                        ))}
+                        <button
+                          onClick={() => addOption(qIndex)}
+                          style={{ padding: "4px 8px", backgroundColor: "#1a73e8", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}
+                        >
+                          Add Option
+                        </button>
+                      </>
+                    )}
+                    <input
+                      type="text"
+                      placeholder="Correct Answers (comma-separated)"
+                      value={q.correctAnswers.join(",")}
+                      onChange={(e) => updateQuestion(qIndex, "correctAnswers", e.target.value.split(","))}
+                      style={{ width: "100%", marginBottom: "5px", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Image URL (optional)"
+                      value={q.imageUrl}
+                      onChange={(e) => updateQuestion(qIndex, "imageUrl", e.target.value)}
+                      style={{ width: "100%", marginBottom: "5px", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Audio URL (optional)"
+                      value={q.audioUrl}
+                      onChange={(e) => updateQuestion(qIndex, "audioUrl", e.target.value)}
+                      style={{ width: "100%", marginBottom: "5px", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Video URL (optional)"
+                      value={q.videoUrl}
+                      onChange={(e) => updateQuestion(qIndex, "videoUrl", e.target.value)}
+                      style={{ width: "100%", marginBottom: "5px", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
+                    />
+                  </div>
                 ))}
                 <div style={{ display: "flex", justifyContent: "space-between", marginTop: "20px" }}>
                     <button
@@ -373,38 +376,49 @@ export default function AdminQuizApp() {
             {editingQuizId && (
                 <div className="share-section">
                     <h3>Share Quiz</h3>
-                    <select
+                    <input
+                        type="text"
+                        placeholder="Enter Course Number (e.g., 0012323)"
                         value={courseNumber}
                         onChange={(e) => setCourseNumber(e.target.value)}
-                        style={{ marginBottom: "10px", width: "200px", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
-                    >
-                        <option value="">Select Course Number</option>
-                        <option value="0012141">0012141</option>
-                        <option value="0012150">0012150</option>
-                        <option value="0012159">0012159</option>
-                        <option value="0012206">0012206</option>
-                        <option value="0012305">0012305</option>
-                        <option value="0012313">0012313</option>
-                        <option value="0012323">0012323</option>
-                        <option value="0022211">0022211</option>
-                        <option value="0022239">0022239</option>
-                        <option value="0022248">0022248</option>
-                        <option value="0022304">0022304</option>
-                        <option value="0022326">0022326</option>
-                        <option value="0022330">0022330</option>
-                        <option value="05050010">05050010</option>
-                        <option value="05050020">05050020</option>
-                        <option value="05050030">05050030</option>
-                        <option value="05050040">05050040</option>
-                    </select>
+                        style={{
+                            width: "50%",
+                            padding: "8px",
+                            marginBottom: "10px",
+                            borderRadius: "4px",
+                            border: "1px solid #dadce0",
+                        }}
+                    />
                     <div style={{ marginBottom: "10px" }}>
                         <button onClick={generateQuizUrl}>Generate URL</button>
                         <button onClick={downloadQRCode}>Download QR Code</button>
+                        <button
+                            onClick={() => {
+                                const cleanCourseNumber = courseNumber.trim().replace(/[^0-9]/g, '');
+                                const adminUrl = `https://quiz-frontend-frontend.vercel.app/quiz?quizId=${selectedQuizId}&courseNumber=${cleanCourseNumber}&admin=true`;
+                                window.open(adminUrl, "_blank");
+                            }}
+                            style={{
+                                padding: "8px 16px",
+                                backgroundColor: "#fbbc04",
+                                color: "#202124",
+                                border: "none",
+                                borderRadius: "4px",
+                                cursor: "pointer",
+                                marginLeft: "10px",
+                            }}
+                        >
+                            👨‍💻 Test as Admin
+                        </button>
                     </div>
+
                     {quizUrl && (
                         <>
                             <p>
-                                Generated URL: <a href={quizUrl} target="_blank" rel="noopener noreferrer">{quizUrl}</a>
+                                Generated URL:{" "}
+                                <a href={quizUrl} target="_blank" rel="noopener noreferrer">
+                                    {quizUrl}
+                                </a>
                             </p>
                             <img
                                 src={`https://quiz-app-backend-jp.fly.dev/generate_qr/${selectedQuizId}/${courseNumber.trim().replace(/[^0-9]/g, '')}`}
