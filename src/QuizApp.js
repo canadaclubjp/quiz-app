@@ -122,12 +122,9 @@ export default function QuizApp() {
     }, [studentNumber, firstNameEnglish, lastNameEnglish, courseNumber, quizId, answers, submitted, isAdminMode]);
 
     useEffect(() => {
-        if (timeLeft === null || submitted) return;
-        if (timeLeft <= 0) {
-            submitQuiz();
-            return;
-        }
-        const timerId = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
+        console.log("Timer effect running with timeLeft:". timeLeft, "submitted:", submitted);
+        if (timeLeft === null || submitted || timeLeft <=0) return;
+        const timerId = setInterval(() => setTimeLeft((prev) => -1), 1000);
         return () => clearInterval(timerId);
     }, [timeLeft, submitted, submitQuiz]);
 
