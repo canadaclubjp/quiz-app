@@ -98,7 +98,7 @@ export default function QuizApp() {
             course_number: courseNumber,
             answers: formattedAnswers
         };
-        console.log("Submitting:", submission);
+        console.log("Submitting quiz data:", submission); // Detailed submission log
         try {
             const response = await fetch(submitUrl, {
                 method: "POST",
@@ -110,6 +110,7 @@ export default function QuizApp() {
                 throw new Error(`HTTP error! status: ${response.status}, details: ${errorText}`);
             }
             const result = await response.json();
+            console.log("Backend response:", result); // Log the full response
             setScore(result.score);
             setTotal(result.total);
             setSubmitted(true);
