@@ -98,7 +98,7 @@ export default function QuizApp() {
             course_number: courseNumber,
             answers: formattedAnswers
         };
-        console.log("Submitting quiz data:", submission); // Detailed submission log
+        console.log("Submitting quiz data:", JSON.stringify(submission, null, 2)); // Pretty print
         try {
             const response = await fetch(submitUrl, {
                 method: "POST",
@@ -110,7 +110,7 @@ export default function QuizApp() {
                 throw new Error(`HTTP error! status: ${response.status}, details: ${errorText}`);
             }
             const result = await response.json();
-            console.log("Backend response:", result); // Log the full response
+            console.log("Backend response:", JSON.stringify(result, null, 2)); // Pretty print
             setScore(result.score);
             setTotal(result.total);
             setSubmitted(true);
@@ -119,7 +119,7 @@ export default function QuizApp() {
             console.error("Error submitting quiz:", err);
             setError(err.message);
         }
-    }, [studentNumber, firstNameEnglish, lastNameEnglish, courseNumber, quizId, answers, submitted]);
+    }, [studentNumber, firstNameEnglish, lastNameEnglish, courseNumber, quizId, answers, submitted, isAdminMode]);
 
     useEffect(() => {
         if (timeLeft === null || submitted) return;
@@ -137,7 +137,7 @@ export default function QuizApp() {
     };
 
     const handleRadioChange = (questionId, value) => {
-        console.log(`Q${questionId} - Radio Selection:`, value);
+        console.log(`Q${questionId} - Radio Selection:`, value, "Updating answers:", { [questionId]: value });
         setAnswers((prev) => ({ ...prev, [questionId]: value }));
     };
 
