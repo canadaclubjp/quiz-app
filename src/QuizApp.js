@@ -122,29 +122,46 @@ export default function QuizApp() {
     }, [studentNumber, firstNameEnglish, lastNameEnglish, courseNumber, quizId, answers, submitted, isAdminMode]);
 
 
+        const timerRef = useRef(null);
 
-    useEffect(() => {
-      let timerId;
-      console.log("Timer effect running with timeLeft:", timeLeft, "submitted:", submitted);
-      if (timeLeft === null || submitted) {
-        if (timerId) clearInterval(timerId);
-        return;
-      }
-      if (timeLeft <= 0) {
-        submitQuiz();
-        return;
-      }
-      timerId = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 0) {
-            submitQuiz();
-            return 0;
+        useEffect(() => {
+          console.log("Timer effect running with timeLeft:", timeLeft, "submitted:", submitted);
+
+          if (timeLeft === null || submitted) {
+            if (timerRef.current) {
+              clearInterval(timerRef.current);
+              timerRef.current = null;
+            }
+            return;
           }
-          return prev - 1;
-        });
-      }, 1000);
-      return () => clearInterval(timerId);
-    }, [timeLeft, submitted]); // Effect runs only when timeLeft or submitted changes
+
+          if (timeLeft <= 0) {
+            submitQuiz();
+            return;
+          }
+
+          // Clear any existing timer before setting a new one
+          if (timerRef.current) {
+            clearInterval(timerRef.current);
+          }
+
+          timerRef.current = setInterval(() => {
+            setTimeLeft((prev) => {
+              if (prev <= 0) {
+                submitQuiz();
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
+
+          return () => {
+            if (timerRef.current) {
+              clearInterval(timerRef.current);
+              timerRef.current = null;
+            }
+          };
+        }, [submitted]); // Only depend on 'submitted', not 'timeLeft'
 
 
     const handleTextInput = (questionId, value) => {
