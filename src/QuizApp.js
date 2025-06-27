@@ -123,10 +123,22 @@ export default function QuizApp() {
 
     useEffect(() => {
         console.log("Timer effect running with timeLeft:". timeLeft, "submitted:", submitted);
-        if (timeLeft === null || submitted || timeLeft <=0) return;
-        const timerId = setInterval(() => setTimeLeft((prev) => -1), 1000);
+        if (timeLeft === null || submitted) return;
+        if (timeLeft <= 0) {
+          submitQuiz();
+          return;
+        }
+        const timerId = setInterval(() => {
+          setTimeLeft((prev) => {
+            if (prev <= 0) {
+              submitQuiz();
+              return 0;  // Prevent negative
+            }
+            return prev -1;
+          });
+        }, 1000);
         return () => clearInterval(timerId);
-    }, [timeLeft, submitted, submitQuiz]);
+      }, [timeLeft, submitted]);
 
     const handleTextInput = (questionId, value) => {
         console.log(`Q${questionId} - Text Input:`, value);
