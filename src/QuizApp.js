@@ -126,37 +126,30 @@ export default function QuizApp() {
     useEffect(() => {
         console.log("Timer effect running with timeLeft:". timeLeft, "submitted:", submitted);
         if (timeLeft === null || submitted) {
-          if (timerId) clearInterval(timerId);
+          if (timerRef.current) clearInterval(timerRef.current);
+          timerRef.current = null;
           return;
         }
         if (timeLeft <= 0) {
-              //  Set default answer if none selected (e.g., first option)
-              const defaultAnswer = quiz.questions?.[0]?.options?.[0] || "";
-              setAnswers((prev) => ({
-              ...prev,
-              [quiz.questions?.[0]?.id || 108]: defaultAnswer.split(": ")[1] || defaultAnswer,
-              }));
-              submitQuiz();
-              return;
+          submitQuiz();  // Submit with current answers (empty if none selected)
+          return;
         }
-        timerRef.current = setInterval(() => {
-          setTimeLeft((prev) => {
-            if (prev <= 0) {
-              const defaultAnswer = quiz.questions?.[0]?.options?.[0] || "";
-              setAnswers((prev) => ({
-              ...prev,
-              [quiz.questions?.[0]?.id || 108]: defaultAnswer.split(": ")[1] || defaultAnswer,
-              }));
-              submitQuiz();
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
+        if (!timerRef.current) {
+          timerRef.current = setInterval(() => {
+            setTimeLeft((prev) => {
+              if (prev <= 0) {
+                submitQuiz();
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
+        }
         return () => {
           if (timerRef.current) clearInterval(timerRef.current);
+          timerRef.current = null;
         };
-    }, [timeLeft, submitted, quiz.questions]); // Add quiz.questions for default answer logic
+    }, [timeLeft, submitted, quiz.questions]); // Limit effect to timeLeft and submitted changes
 
 
     const handleTextInput = (questionId, value) => {
