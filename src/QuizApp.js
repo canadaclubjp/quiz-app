@@ -122,23 +122,28 @@ export default function QuizApp() {
     }, [studentNumber, firstNameEnglish, lastNameEnglish, courseNumber, quizId, answers, submitted, isAdminMode]);
 
     useEffect(() => {
+        let timerId;
         console.log("Timer effect running with timeLeft:". timeLeft, "submitted:", submitted);
-        if (timeLeft === null || submitted) return;
-        if (timeLeft <= 0) {
-          submitQuiz();
+        if (timeLeft === null || submitted) {
+        if (timerId) clearInterval(timerId);
           return;
         }
-        const timerId = setInterval(() => {
+        if (timeLeft <= 0) {
+              submitQuiz();
+              return;
+        }
+        timerId = setInterval(() => {
           setTimeLeft((prev) => {
             if (prev <= 0) {
               submitQuiz();
-              return 0;  // Prevent negative
+              return 0;
             }
-            return prev -1;
+            return prev - 1;
           });
         }, 1000);
         return () => clearInterval(timerId);
-      }, [timeLeft, submitted]);
+    }, [timeLeft, submitted]); // Effect runs only when timeLeft or submitted changes
+
 
     const handleTextInput = (questionId, value) => {
         console.log(`Q${questionId} - Text Input:`, value);
