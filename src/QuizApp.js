@@ -121,35 +121,30 @@ export default function QuizApp() {
         }
     }, [studentNumber, firstNameEnglish, lastNameEnglish, courseNumber, quizId, answers, submitted, isAdminMode]);
 
-    const timerRef = useRef(null);
+
 
     useEffect(() => {
-        console.log("Timer effect running with timeLeft:". timeLeft, "submitted:", submitted);
-        if (timeLeft === null || submitted) {
-          if (timerRef.current) clearInterval(timerRef.current);
-          timerRef.current = null;
-          return;
-        }
-        if (timeLeft <= 0) {
-          submitQuiz();  // Submit with current answers (empty if none selected)
-          return;
-        }
-        if (!timerRef.current) {
-          timerRef.current = setInterval(() => {
-            setTimeLeft((prev) => {
-              if (prev <= 0) {
-                submitQuiz();
-                return 0;
-              }
-              return prev - 1;
-            });
-          }, 1000);
-        }
-        return () => {
-          if (timerRef.current) clearInterval(timerRef.current);
-          timerRef.current = null;
-        };
-    }, [timeLeft, submitted, quiz.questions]); // Limit effect to timeLeft and submitted changes
+      let timerId;
+      console.log("Timer effect running with timeLeft:", timeLeft, "submitted:", submitted);
+      if (timeLeft === null || submitted) {
+        if (timerId) clearInterval(timerId);
+        return;
+      }
+      if (timeLeft <= 0) {
+        submitQuiz();
+        return;
+      }
+      timerId = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 0) {
+            submitQuiz();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timerId);
+    }, [timeLeft, submitted]); // Effect runs only when timeLeft or submitted changes
 
 
     const handleTextInput = (questionId, value) => {
