@@ -121,28 +121,42 @@ export default function QuizApp() {
         }
     }, [studentNumber, firstNameEnglish, lastNameEnglish, courseNumber, quizId, answers, submitted, isAdminMode]);
 
+    const timerRef = useRef(null);
+
     useEffect(() => {
-        let timerId;
         console.log("Timer effect running with timeLeft:". timeLeft, "submitted:", submitted);
         if (timeLeft === null || submitted) {
-        if (timerId) clearInterval(timerId);
+          if (timerId) clearInterval(timerId);
           return;
         }
         if (timeLeft <= 0) {
+              //  Set default answer if none selected (e.g., first option)
+              const defaultAnswer = quiz.questions?.[0]?.options?.[0] || "";
+              setAnswers((prev) => ({
+              ...prev,
+              [quiz.questions?.[0]?.id || 108]: defaultAnswer.split(": ")[1] || defaultAnswer,
+              }));
               submitQuiz();
               return;
         }
-        timerId = setInterval(() => {
+        timerRef.current = setInterval(() => {
           setTimeLeft((prev) => {
             if (prev <= 0) {
+              const defaultAnswer = quiz.questions?.[0]?.options?.[0] || "";
+              setAnswers((prev) => ({
+              ...prev,
+              [quiz.questions?.[0]?.id || 108]: defaultAnswer.split(": ")[1] || defaultAnswer,
+              }));
               submitQuiz();
               return 0;
             }
             return prev - 1;
           });
         }, 1000);
-        return () => clearInterval(timerId);
-    }, [timeLeft, submitted]); // Effect runs only when timeLeft or submitted changes
+        return () => {
+          if (timerRef.current) clearInterval(timerRef.current);
+        };
+    }, [timeLeft, submitted, quiz.questions]); // Add quiz.questions for default answer logic
 
 
     const handleTextInput = (questionId, value) => {
