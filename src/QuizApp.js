@@ -122,49 +122,51 @@ export default function QuizApp() {
     }, [studentNumber, firstNameEnglish, lastNameEnglish, courseNumber, quizId, answers, submitted, isAdminMode]);
 
 
-        const timerRef = useRef(null);
-        const isTimerRunning = useRef(false);
+    const timerRef = useRef(null);
+    const isTimerRunning = useRef(false);
 
-        useEffect(() => {
-          console.log("Timer effect running with timeLeft:", timeLeft, "submitted:", submitted);
+    useEffect(() => {
+      console.log("Timer effect running with timeLeft:", timeLeft, "submitted:", submitted);
 
-          //  If quiz is submitted  or timeLeft is null, clear any existing timer
-          if (timeLeft === null || submitted) {
-            if (timerRef.current) {
-              clearInterval(timerRef.current);
-              timerRef.current = null;
-              isTimerRunning.current = false;
+      // If quiz is submitted or timeLeft is null, clear any existing timer
+      if (timeLeft === null || submitted) {
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+          isTimerRunning.current = false;
+        }
+        return;
+      }
+
+      // If time is up, submit the quiz
+      if (timeLeft <= 0) {
+        submitQuiz();
+        return;
+      }
+
+      // Only start a new timer if one isn't already running
+      if (!isTimerRunning.current) {
+        isTimerRunning.current = true;
+
+        timerRef.current = setInterval(() => {
+          setTimeLeft((prev) => {
+            if (prev <= 1) { // Changed from <= 0 to <= 1 to avoid race condition
+              submitQuiz();
+              return 0;
             }
-            return;
-          }
+            return prev - 1;
+          });
+        }, 1000);
+      }
 
-          //  If time is up, submit the quiz
-          if (timeLeft <= 0) {
-            submitQuiz();
-            return;
-          }
-
-          //  Only start a new timer if one isn't already running
-          if (!isTimerRunning.current)  {
-            isTimerRunning.current = true;
-
-            timerRef.current = setInterval(() => {
-              setTimeLeft((prev) => {
-                if (prev <= 1) {  //  Changed from <=0 to <=1 to avoid race condition
-                submitQuiz();
-                return 0;
-              }
-              return prev - 1;
-            });
-          }, 1000);
-
-          return () => {
-            if (timerRef.current) {
-              clearInterval(timerRef.current);
-              timerRef.current = false;
-            }
-          };
-        }, [timeLeft, submitted, submitQuiz]); //  Include timeLeft but use ref to prevent loops
+      return () => {
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+          isTimerRunning.current = false;
+        }
+      };
+    }, [timeLeft, submitted, submitQuiz]); // Include timeLeft but use ref to prevent loops
 
 
     const handleTextInput = (questionId, value) => {
