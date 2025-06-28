@@ -123,18 +123,18 @@ export default function QuizApp() {
 
 
     const timerRef = useRef(null);
-    const isTimerRunning = useRef(false);
 
     useEffect(() => {
       console.log("Timer effect running with timeLeft:", timeLeft, "submitted:", submitted);
 
-      // If quiz is submitted or timeLeft is null, clear any existing timer
+      // Clear any existing timer first
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+
+      // Don't start timer if quiz is submitted or timeLeft is null
       if (timeLeft === null || submitted) {
-        if (timerRef.current) {
-          clearInterval(timerRef.current);
-          timerRef.current = null;
-          isTimerRunning.current = false;
-        }
         return;
       }
 
@@ -144,30 +144,33 @@ export default function QuizApp() {
         return;
       }
 
-      // Only start a new timer if one isn't already running
-      if (!isTimerRunning.current) {
-        isTimerRunning.current = true;
-
-        timerRef.current = setInterval(() => {
-          setTimeLeft((prev) => {
-            if (prev <= 1) { // Changed from <= 0 to <= 1 to avoid race condition
-              submitQuiz();
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
-      }
+      // Start the timer
+      timerRef.current = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            submitQuiz();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
 
       return () => {
         if (timerRef.current) {
           clearInterval(timerRef.current);
           timerRef.current = null;
-          isTimerRunning.current = false;
         }
       };
-    }, [timeLeft, submitted, submitQuiz]); // Include timeLeft but use ref to prevent loops
+    }, [submitted]); // Only depend on submitted
 
+    // Cleanup timer on unmount
+    useEffect(() => {
+      return () => {
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+        }
+      };
+    }, []);
 
     const handleTextInput = (questionId, value) => {
         console.log(`Q${questionId} - Text Input:`, value);
