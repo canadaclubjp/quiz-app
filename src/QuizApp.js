@@ -123,41 +123,11 @@ export default function QuizApp() {
 
 
     const timerRef = useRef(null);
-    const timerStarted = useRef(false);
 
+    // Effect to start timer when timeLeft is first set from null to a number
     useEffect(() => {
-      console.log("Timer effect running with timeLeft:", timeLeft, "submitted:", submitted, "timerStarted:", timerStarted.current);
-
-      // If quiz is submitted, clear timer and stop
-      if (submitted) {
-        if (timerRef.current) {
-          clearInterval(timerRef.current);
-          timerRef.current = null;
-        }
-        timerStarted.current = false;
-        return;
-      }
-
-      // If timeLeft is null, clear timer and reset
-      if (timeLeft === null) {
-        if (timerRef.current) {
-          clearInterval(timerRef.current);
-          timerRef.current = null;
-        }
-        timerStarted.current = false;
-        return;
-      }
-
-      // If time is up, submit the quiz
-      if (timeLeft <= 0) {
-        submitQuiz();
-        return;
-      }
-
-      // Start timer only if timeLeft is set and timer hasn't been started yet
-      if (timeLeft > 0 && !timerStarted.current) {
-        timerStarted.current = true;
-
+      if (timeLeft !== null && timeLeft > 0 && !submitted && !timerRef.current) {
+        console.log("Starting timer with timeLeft:", timeLeft);
         timerRef.current = setInterval(() => {
           setTimeLeft((prev) => {
             if (prev <= 1) {
@@ -168,14 +138,27 @@ export default function QuizApp() {
           });
         }, 1000);
       }
+    }, [timeLeft]); // Only runs when timeLeft changes
 
+    // Effect to clear timer when submitted
+    useEffect(() => {
+      if (submitted && timerRef.current) {
+        console.log("Clearing timer due to submission");
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    }, [submitted]);
+
+    // Cleanup on unmount
+    useEffect(() => {
       return () => {
         if (timerRef.current) {
           clearInterval(timerRef.current);
           timerRef.current = null;
         }
       };
-    }, [timeLeft, submitted]); // Include timeLeft to detect initialization, but use ref to prevent multiple timers
+    }, []);
+
 
     const handleTextInput = (questionId, value) => {
         console.log(`Q${questionId} - Text Input:`, value);
