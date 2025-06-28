@@ -331,8 +331,7 @@ export default function QuizApp() {
                                         const cleanOpt = opt.includes(": ")
                                             ? opt.split(": ")[1].trim()
                                             : opt.trim();
-                                        const inputElement = document.querySelector(`input[name="question-${q.id}"]`);
-                                        console.log("Rendering Q", q.id, "option", opt, "index", index, "with type", "radio");
+
                                         return (
                                             <div key={index} className="choice-item">
                                                 <input
