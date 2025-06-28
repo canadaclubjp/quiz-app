@@ -123,18 +123,28 @@ export default function QuizApp() {
 
 
     const timerRef = useRef(null);
+    const timerStarted = useRef(false);
 
     useEffect(() => {
-      console.log("Timer effect running with timeLeft:", timeLeft, "submitted:", submitted);
+      console.log("Timer effect running with timeLeft:", timeLeft, "submitted:", submitted, "timerStarted:", timerStarted.current);
 
-      // Clear any existing timer first
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
+      // If quiz is submitted, clear timer and stop
+      if (submitted) {
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+        timerStarted.current = false;
+        return;
       }
 
-      // Don't start timer if quiz is submitted or timeLeft is null
-      if (timeLeft === null || submitted) {
+      // If timeLeft is null, clear timer and reset
+      if (timeLeft === null) {
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+        timerStarted.current = false;
         return;
       }
 
@@ -144,16 +154,20 @@ export default function QuizApp() {
         return;
       }
 
-      // Start the timer
-      timerRef.current = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
-            submitQuiz();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+      // Start timer only if timeLeft is set and timer hasn't been started yet
+      if (timeLeft > 0 && !timerStarted.current) {
+        timerStarted.current = true;
+
+        timerRef.current = setInterval(() => {
+          setTimeLeft((prev) => {
+            if (prev <= 1) {
+              submitQuiz();
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      }
 
       return () => {
         if (timerRef.current) {
@@ -161,16 +175,7 @@ export default function QuizApp() {
           timerRef.current = null;
         }
       };
-    }, [submitted]); // Only depend on submitted
-
-    // Cleanup timer on unmount
-    useEffect(() => {
-      return () => {
-        if (timerRef.current) {
-          clearInterval(timerRef.current);
-        }
-      };
-    }, []);
+    }, [timeLeft, submitted]); // Include timeLeft to detect initialization, but use ref to prevent multiple timers
 
     const handleTextInput = (questionId, value) => {
         console.log(`Q${questionId} - Text Input:`, value);
