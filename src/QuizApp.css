@@ -1,3 +1,9 @@
+.quiz-container > div {
+  border: 2px solid blue !important;
+  background: pink !important;
+  margin: 10px 0 !important;
+}
+
 /* === QuizApp.css - Improved Legibility === */
 
 /* === Base Container === */
