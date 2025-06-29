@@ -1,5 +1,6 @@
-/* === QuizApp.css === */
+/* === QuizApp.css - Improved Legibility === */
 
+/* === Base Container === */
 .quiz-container {
   width: 100%;
   max-width: 800px;
@@ -11,13 +12,15 @@
   flex-direction: column;
   align-items: center;
   background-color: #E6E6FA;
+  font-size: 18px; /* Increased base font size */
+  line-height: 1.6; /* Better line spacing */
 }
 
-/* === Sign-in === */
+/* === Sign-in Section === */
 .signin-container {
   max-width: 400px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 24px; /* Increased padding */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -26,16 +29,14 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Force clean build - Updated at 03:44 PM JST, June 24, 2025 */
-
 .signin-input,
 .signin-button {
   width: 100%;
   max-width: 300px;
-  padding: 10px;
+  padding: 14px; /* Increased padding for better touch targets */
   border-radius: 6px;
-  font-size: 16px;
-  margin-bottom: 10px;
+  font-size: 18px; /* Larger font size */
+  margin-bottom: 12px;
 }
 
 .signin-input {
@@ -47,8 +48,10 @@
   color: white;
   border: none;
   cursor: pointer;
+  font-weight: 600; /* Slightly bolder */
   transition: background 0.3s;
 }
+
 .signin-button:hover {
   background-color: #45a049;
 }
@@ -58,33 +61,37 @@
   background: white;
   border: 1px solid #ccc;
   border-radius: 10px;
-  padding: 16px;
-  margin-bottom: 20px;
+  padding: 20px; /* Increased padding */
+  margin-bottom: 24px; /* More spacing between questions */
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  width: 100%;
 }
 
 .question-block h3 {
-  font-size: 18px;
-  margin-bottom: 12px;
+  font-size: 20px; /* Larger question text */
+  margin-bottom: 16px;
   color: #333;
+  font-weight: 600;
+  line-height: 1.4;
 }
 
 /* === Choices === */
 .choice-item {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-  padding: 4px; /* consistent padding */
-  border-radius: 4px; /* consistent radius */
+  align-items: flex-start; /* Better alignment for multi-line text */
+  gap: 14px; /* Increased gap */
+  margin-bottom: 16px; /* More spacing between choices */
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer; /* Make entire choice clickable feel */
 }
 
-
 .choice-text {
-  font-size: 16px;
+  font-size: 17px; /* Larger choice text */
   color: #333;
   line-height: 1.5;
   flex: 1;
+  font-weight: 400;
 }
 
 .choice-item:hover {
@@ -92,33 +99,38 @@
 }
 
 .choice-item input[type="radio"] {
-  width: 20px;
-  height: 20px;
+  width: 22px; /* Larger radio buttons */
+  height: 22px;
   cursor: pointer;
   accent-color: #4CAF50;
+  margin-top: 2px; /* Slight alignment adjustment */
 }
 
 /* === Text Input === */
 .text-input {
   width: 100%;
-  padding: 10px;
-  font-size: 16px;
+  padding: 14px; /* Increased padding */
+  font-size: 17px; /* Larger font */
   border: 1px solid #ccc;
   border-radius: 6px;
+  line-height: 1.4;
 }
 
 /* === Buttons === */
 .submit-button {
-  padding: 10px 20px;
-  font-size: 16px;
+  padding: 14px 24px; /* Larger touch target */
+  font-size: 18px; /* Larger font */
+  font-weight: 600;
   background-color: #4CAF50;
   color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  margin-top: 10px;
+  margin-top: 16px;
   transition: background 0.3s;
+  min-height: 48px; /* Minimum touch target size */
 }
+
 .submit-button:hover {
   background-color: #45a049;
 }
@@ -128,20 +140,23 @@
 .error,
 .loading {
   text-align: center;
-  padding: 20px;
-  font-size: 16px;
+  padding: 24px;
+  font-size: 18px; /* Larger status text */
+  line-height: 1.5;
 }
 
 .error {
-  color: red;
+  color: #d73027; /* Better error color */
+  font-weight: 500;
 }
 
 /* === Timer === */
 .timer {
-  font-size: 18px;
+  font-size: 22px; /* Larger timer */
   font-weight: bold;
   text-align: center;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
+  color: #333;
 }
 
 /* === Media === */
@@ -149,61 +164,152 @@ img,
 audio,
 video {
   max-width: 100%;
-  margin-top: 10px;
+  margin-top: 12px;
+  border-radius: 4px;
 }
 
 /* === Responsive Styles === */
+
+/* Tablet styles (768px and below) */
 @media (max-width: 768px) {
   .quiz-container,
   .signin-container {
-    padding: 10px;
+    padding: 16px;
+    font-size: 19px; /* Even larger on tablets */
   }
+
   .question-block {
-    padding: 12px;
+    padding: 18px;
   }
+
+  .question-block h3 {
+    font-size: 22px; /* Larger questions on tablets */
+  }
+
   .choice-item {
-    gap: 10px;
+    gap: 12px;
+    padding: 10px;
+    margin-bottom: 18px;
   }
+
   .choice-text {
-    font-size: 15px;
+    font-size: 18px; /* Larger choice text on tablets */
   }
+
+  .choice-item input[type="radio"] {
+    width: 24px; /* Larger radio buttons on tablets */
+    height: 24px;
+  }
+
+  .text-input {
+    font-size: 18px;
+    padding: 16px;
+  }
+
   .submit-button,
   .signin-button {
-    font-size: 15px;
+    font-size: 19px;
+    padding: 16px 24px;
+    min-height: 52px; /* Larger touch targets */
+  }
+
+  .timer {
+    font-size: 24px;
   }
 }
 
+/* Mobile styles (480px and below) */
 @media (max-width: 480px) {
-  .question-block {
-    padding: 10px;
+  .quiz-container {
+    padding: 12px;
+    font-size: 20px; /* Largest font on mobile */
   }
+
+  .question-block {
+    padding: 16px;
+  }
+
+  .question-block h3 {
+    font-size: 24px; /* Large questions on mobile */
+    margin-bottom: 18px;
+  }
+
   .choice-item {
     flex-direction: row;
     align-items: flex-start;
+    gap: 14px;
+    padding: 12px;
+    margin-bottom: 20px;
   }
+
   .choice-text {
-    font-size: 14px;
+    font-size: 19px; /* Large choice text on mobile */
+    line-height: 1.6;
   }
+
+  .choice-item input[type="radio"] {
+    width: 26px; /* Largest radio buttons on mobile */
+    height: 26px;
+    margin-top: 0;
+  }
+
   .text-input,
-  .signin-input,
-  .submit-button {
-    font-size: 14px;
+  .signin-input {
+    font-size: 19px;
+    padding: 18px;
+  }
+
+  .submit-button,
+  .signin-button {
+    font-size: 20px;
+    padding: 18px 24px;
+    min-height: 56px; /* Large touch targets for mobile */
+  }
+
+  .timer {
+    font-size: 26px;
+    margin-bottom: 24px;
   }
 
   h1 {
-    font-size: 20px;
+    font-size: 28px; /* Larger headings */
   }
-  h3 {
-    font-size: 16px;
+
+  .result,
+  .error,
+  .loading {
+    font-size: 20px;
+    padding: 28px;
   }
 }
 
-/* === Accessibility === */
+/* === Accessibility & Focus States === */
 .choice-item input[type="radio"]:focus {
-    outline: 2px solid #1a73e8;
+  outline: 3px solid #1a73e8; /* Thicker focus outline */
+  outline-offset: 2px;
 }
+
 .text-input:focus,
 .signin-input:focus {
-    outline: 2px solid #1a73e8;
-    border-color: #1a73e8;
+  outline: 3px solid #1a73e8;
+  outline-offset: 2px;
+  border-color: #1a73e8;
+}
+
+.submit-button:focus,
+.signin-button:focus {
+  outline: 3px solid #1a73e8;
+  outline-offset: 2px;
+}
+
+/* === High Contrast Support === */
+@media (prefers-contrast: high) {
+  .choice-item {
+    border: 1px solid #333;
+  }
+
+  .choice-text {
+    color: #000;
+    font-weight: 500;
+  }
 }
