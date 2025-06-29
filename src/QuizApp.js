@@ -42,6 +42,8 @@ export default function QuizApp() {
         }
     }, [isAdminMode, quizId, courseNumber]);
 
+//  Minor note added to help trigger redeploy
+
     const BACKEND_URL = "https://quiz-app-backend-jp.fly.dev";
 
     const fetchQuiz = async () => {
