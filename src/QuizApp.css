@@ -1,9 +1,3 @@
-.quiz-container > div {
-  border: 2px solid blue !important;
-  background: pink !important;
-  margin: 10px 0 !important;
-}
-
 /* === QuizApp.css - Improved Legibility === */
 
 /* === Base Container === */
@@ -62,8 +56,8 @@
   background-color: #45a049;
 }
 
-/* === Question Block === */
-.question-block {
+/* === Question Styling === */
+.quiz-container > div {
   background: white;
   border: 1px solid #ccc;
   border-radius: 10px;
@@ -71,6 +65,7 @@
   margin-bottom: 24px; /* More spacing between questions */
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
   width: 100%;
+  font-size: 18px; /* Larger text in question containers */
 }
 
 .quiz-container h3 {
@@ -184,8 +179,9 @@ video {
     font-size: 19px; /* Even larger on tablets */
   }
 
-  .question-block {
+  .quiz-container > div {
     padding: 18px;
+    font-size: 19px;
   }
 
   .quiz-container h3 {
@@ -231,8 +227,9 @@ video {
     font-size: 20px; /* Largest font on mobile */
   }
 
-  .question-block {
+  .quiz-container > div {
     padding: 16px;
+    font-size: 20px;
   }
 
   .quiz-container h3 {
