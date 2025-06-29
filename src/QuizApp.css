@@ -1,3 +1,8 @@
+body {
+  border: 5px solid red !important;
+  background: yellow !important;
+}
+
 /* === QuizApp.css - Improved Legibility === */
 
 /* === Base Container === */
