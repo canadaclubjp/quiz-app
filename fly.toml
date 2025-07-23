@@ -13,7 +13,7 @@ primary_region = "nrt"
   internal_port = 80
   force_https = true
   auto_stop_machines = false  #  Changed from true to keep machines going rather than having slow start up in classes
-  auto_start_machines = true  #  Keep machines going
+  auto_start_machines = true  #  Updated at 14:20 JST, July 23, 2025
   min_machines_running = 1   #  Changed from 0 to keep one machine going, to hopefully have app start faster
 
 [mounts]
