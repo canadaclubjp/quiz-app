@@ -18,4 +18,4 @@ primary_region = "nrt"
 
 [mounts]
   source = "quiz_data"
-  destination = "/data"
+  destination = "/data"  # updated from snapshot
