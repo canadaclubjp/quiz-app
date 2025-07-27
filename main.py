@@ -25,7 +25,6 @@ import logging
 import pytz
 import uvicorn  # Add uvicorn import for running the app
 import base64
-from flask_cors import CORS
 
 
 DATABASE_URL = "sqlite:////data/quiz.db"
