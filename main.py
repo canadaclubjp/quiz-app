@@ -27,6 +27,8 @@ import uvicorn  # Add uvicorn import for running the app
 import base64
 
 
+DATABASE_URL = "sqlite:////data/quiz.db"
+
 print(f"=== main.py started at {datetime.now()} ===")
 
 logging.basicConfig(level=logging.INFO)
