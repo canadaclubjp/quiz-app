@@ -28,14 +28,7 @@ import base64
 
 
 DATABASE_URL = "sqlite:////data/quiz.db"
-app = FastAPI()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["https://quiz-frontend-frontend.vercel.app"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+
 
 print(f"=== main.py started at {datetime.now()} ===")
 
