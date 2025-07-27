@@ -25,9 +25,18 @@ import logging
 import pytz
 import uvicorn  # Add uvicorn import for running the app
 import base64
+from flask_cors import CORS
 
 
 DATABASE_URL = "sqlite:////data/quiz.db"
+app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://quiz-frontend-frontend.vercel.app"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 print(f"=== main.py started at {datetime.now()} ===")
 
