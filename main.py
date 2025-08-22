@@ -655,7 +655,7 @@ async def add_quiz(quiz: QuizCreate, db: Session = Depends(get_db)):
                 raise HTTPException(status_code=400, detail="Multiple-choice questions must have at least two options")
 
         # Create quiz but don't commit yet
-        db_quiz = Quiz(title=quiz.title, description=quiz.description)
+        db_quiz = Quiz(title=quiz.title, description=quiz.description, created_at=datetime.now(pytz.timezone('Asia/Tokyo')))
         db.add(db_quiz)
         db.flush()  # Flush to get the quiz ID, but don't commit
 

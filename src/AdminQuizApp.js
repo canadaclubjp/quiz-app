@@ -16,7 +16,9 @@ export default function AdminQuizApp() {
 
     const fetchQuizzes = async () => {
         try {
-            const response = await axios.get("https://quiz-app-backend-jp.fly.dev/quizzes/");
+            const response = await axios.get("https://quiz-app-backend-jp.fly.dev/quizzes/", {
+                maxRedirects: 5, // Allow redirects
+            });
             // Ensure response.data is an array; if not, set to empty array
             const data = Array.isArray(response.data) ? response.data : [];
             setQuizzes(data);
