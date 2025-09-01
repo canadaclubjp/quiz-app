@@ -628,8 +628,21 @@ async def submit_quiz(quiz_id: int, submission: AnswerSubmission, admin: bool = 
             logger.error(f"Error saving quiz submission: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Failed to save submission: {str(e)}")
 
-    return {"score": score, "total": total}
+    debug_data = {}
+    for q in questions:
+        correct = json.loads(q.correct_answers) if q.correct_answers else []
+        student_answer = submission.answers.get(str(q.id), [])
+        debug_data.update({
+            f"question_{q.id}_raw_correct": correct,
+            f"question_{q.id}_student_answer": student_answer
+        })
+    debug_data["submission_answers"] = submission.answers
 
+    return {
+        "score": score,
+        "total": total,
+        "debug": debug_data
+    }
 
 @app.post("/add_quiz/")
 async def add_quiz(quiz: QuizCreate, db: Session = Depends(get_db)):
