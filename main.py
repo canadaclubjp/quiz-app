@@ -558,8 +558,8 @@ async def submit_quiz(quiz_id: int, submission: AnswerSubmission, admin: bool = 
             if isinstance(answer, str):
                 for sep in [": ", ":"]:
                     if sep in answer:
-                        return answer.split(sep, 1)[-1].strip()
-            return answer.strip()
+                        return answer.split(sep, 1)[-1]
+            return answer
 
         # Process correct answers
         correct_cleaned = [strip_prefix(ans) for ans in correct]
@@ -574,11 +574,11 @@ async def submit_quiz(quiz_id: int, submission: AnswerSubmission, admin: bool = 
                 student_answer = ""
             student_answer_cleaned = strip_prefix(student_answer)
             logging.info(f"Text answer cleaned: '{student_answer_cleaned}'")
-            if student_answer_cleaned.lower() in [ans.lower() for ans in correct_cleaned]:
+            if student_answer_cleaned in [strip_prefix(ans) for ans in correct_cleaned]:
                 score += 1
                 logging.info(f"Q{q.id}: TEXT CORRECT - Score incremented to {score}")
             else:
-                logging.info(f"Q{q.id}: TEXT INCORRECT")
+                logging.info(f"Q{q.id}: TEXT INCORRECT - Expected one of {[strip_prefix(ans) for ans in correct_cleaned]}, Got '{student_answer_cleaned}'")
         else:
             # Multiple choice processing - FIXED for radio buttons (single selection)
             if isinstance(student_answer, list) and student_answer:
