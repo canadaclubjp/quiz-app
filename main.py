@@ -742,9 +742,112 @@ async def generate_qr(quiz_id: int, course_number: str, db: Session = Depends(ge
 
 # Add this new endpoint to your main.py (anywhere after the app = FastAPI() line)
 
+# @app.post("/debug_scoring/{quiz_id}")
+# async def debug_scoring(quiz_id: int, submission: AnswerSubmission, db: Session = Depends(get_db)):
+#     """Debug endpoint to see exactly what's happening in scoring logic"""
+#
+#     quiz = db.query(Quiz).filter(Quiz.id == quiz_id).first()
+#     if not quiz:
+#         raise HTTPException(status_code=404, detail="Quiz not found")
+#
+#     questions = db.query(Question).filter(Question.quiz_id == quiz_id).all()
+#     debug_info = []
+#     score = 0
+#
+#     for q in questions:
+#         correct = json.loads(q.correct_answers) if q.correct_answers else []
+#         student_answer = submission.answers.get(str(q.id), [])
+#
+#         question_debug = {
+#             "question_id": q.id,
+#             "question_text": q.question_text,
+#             "is_text_input": q.is_text_input,
+#             "raw_student_answer": student_answer,
+#             "raw_student_type": str(type(student_answer)),
+#             "raw_correct_answers": correct,
+#             "raw_correct_type": str(type(correct))
+#         }
+#
+#         # Strip prefixes function
+#         def strip_prefix(answer):
+#             if isinstance(answer, str):
+#                 for sep in [": ", ":"]:
+#                     if sep in answer:
+#                         return answer.split(sep, 1)[-1].strip()
+#             return answer.strip()
+#
+#         # Process correct answers
+#         correct_cleaned = [strip_prefix(ans) for ans in correct]
+#         question_debug["correct_cleaned"] = correct_cleaned
+#
+#         if q.is_text_input:
+#             if isinstance(student_answer, str):
+#                 student_answer_processed = student_answer
+#             elif isinstance(student_answer, list) and student_answer:
+#                 student_answer_processed = student_answer[0]
+#             else:
+#                 student_answer_processed = ""
+#             student_answer_cleaned = strip_prefix(student_answer_processed)
+#             question_debug["student_answer_cleaned"] = student_answer_cleaned
+#             question_debug["scoring_method"] = "text_input"
+#
+#             # Check if correct
+#             is_correct = student_answer_cleaned.lower() in [ans.lower() for ans in correct_cleaned]
+#             question_debug["is_correct"] = is_correct
+#             question_debug["comparison_details"] = {
+#                 "student_lower": student_answer_cleaned.lower(),
+#                 "correct_lower": [ans.lower() for ans in correct_cleaned]
+#             }
+#
+#             if is_correct:
+#                 score += 1
+#
+#         else:
+#             # Multiple choice
+#             student_answer = student_answer if isinstance(student_answer, list) else []
+#             student_answer_cleaned = [strip_prefix(ans) for ans in student_answer]
+#             question_debug["student_answer_cleaned"] = student_answer_cleaned
+#             question_debug["scoring_method"] = "multiple_choice"
+#
+#             # Check each comparison
+#             comparisons = []
+#             match_found = False
+#
+#             for student_ans in student_answer_cleaned:
+#                 for correct_ans in correct_cleaned:
+#                     comparison = {
+#                         "student": student_ans,
+#                         "correct": correct_ans,
+#                         "equal": student_ans == correct_ans,
+#                         "student_repr": repr(student_ans),
+#                         "correct_repr": repr(correct_ans)
+#                     }
+#                     comparisons.append(comparison)
+#                     if student_ans == correct_ans:
+#                         match_found = True
+#
+#             question_debug["comparisons"] = comparisons
+#             question_debug["is_correct"] = match_found
+#
+#             if match_found:
+#                 score += 1
+#
+#         question_debug["points_awarded"] = 1 if question_debug["is_correct"] else 0
+#         debug_info.append(question_debug)
+#
+#     return {
+#         "quiz_id": quiz_id,
+#         "quiz_title": quiz.title,
+#         "total_questions": len(questions),
+#         "final_score": score,
+#         "student_number": submission.student_number,
+#         "debug_details": debug_info
+#     }
+#
+
 @app.post("/debug_scoring/{quiz_id}")
 async def debug_scoring(quiz_id: int, submission: AnswerSubmission, db: Session = Depends(get_db)):
-    """Debug endpoint to see exactly what's happening in scoring logic"""
+    """Debug endpoint to see exactly what's happening in scoring logic (single-answer MC only)"""
 
     quiz = db.query(Quiz).filter(Quiz.id == quiz_id).first()
     if not quiz:
@@ -753,6 +856,14 @@ async def debug_scoring(quiz_id: int, submission: AnswerSubmission, db: Session 
     questions = db.query(Question).filter(Question.quiz_id == quiz_id).all()
     debug_info = []
     score = 0
+
+    def normalize(ans):
+        if isinstance(ans, str):
+            for sep in [": ", ":"]:
+                if sep in ans:
+                    ans = ans.split(sep, 1)[-1]
+            return ans.strip().lower()
+        return ans
 
     for q in questions:
         correct = json.loads(q.correct_answers) if q.correct_answers else []
@@ -768,67 +879,56 @@ async def debug_scoring(quiz_id: int, submission: AnswerSubmission, db: Session 
             "raw_correct_type": str(type(correct))
         }
 
-        # Strip prefixes function
-        def strip_prefix(answer):
-            if isinstance(answer, str):
-                for sep in [": ", ":"]:
-                    if sep in answer:
-                        return answer.split(sep, 1)[-1].strip()
-            return answer.strip()
-
-        # Process correct answers
-        correct_cleaned = [strip_prefix(ans) for ans in correct]
+        correct_cleaned = [normalize(ans) for ans in correct]
         question_debug["correct_cleaned"] = correct_cleaned
 
         if q.is_text_input:
+            # Handle text input (case-insensitive, normalized)
             if isinstance(student_answer, str):
-                student_answer_processed = student_answer
+                student_answer_cleaned = normalize(student_answer)
             elif isinstance(student_answer, list) and student_answer:
-                student_answer_processed = student_answer[0]
+                student_answer_cleaned = normalize(student_answer[0])
             else:
-                student_answer_processed = ""
-            student_answer_cleaned = strip_prefix(student_answer_processed)
+                student_answer_cleaned = ""
             question_debug["student_answer_cleaned"] = student_answer_cleaned
             question_debug["scoring_method"] = "text_input"
 
-            # Check if correct
-            is_correct = student_answer_cleaned.lower() in [ans.lower() for ans in correct_cleaned]
+            is_correct = student_answer_cleaned in [ans.lower() for ans in correct_cleaned]
             question_debug["is_correct"] = is_correct
             question_debug["comparison_details"] = {
-                "student_lower": student_answer_cleaned.lower(),
+                "student_lower": student_answer_cleaned,
                 "correct_lower": [ans.lower() for ans in correct_cleaned]
             }
-
             if is_correct:
                 score += 1
-
         else:
-            # Multiple choice
-            student_answer = student_answer if isinstance(student_answer, list) else []
-            student_answer_cleaned = [strip_prefix(ans) for ans in student_answer]
+            # Single-answer MCQ (radio button style)
+            if isinstance(student_answer, list) and student_answer:
+                student_answer_to_check = student_answer[0]
+            elif isinstance(student_answer, str):
+                student_answer_to_check = student_answer
+            else:
+                student_answer_to_check = ""
+            student_answer_cleaned = normalize(student_answer_to_check)
             question_debug["student_answer_cleaned"] = student_answer_cleaned
-            question_debug["scoring_method"] = "multiple_choice"
+            question_debug["scoring_method"] = "single_choice"
 
-            # Check each comparison
             comparisons = []
             match_found = False
-
-            for student_ans in student_answer_cleaned:
-                for correct_ans in correct_cleaned:
-                    comparison = {
-                        "student": student_ans,
-                        "correct": correct_ans,
-                        "equal": student_ans == correct_ans,
-                        "student_repr": repr(student_ans),
-                        "correct_repr": repr(correct_ans)
-                    }
-                    comparisons.append(comparison)
-                    if student_ans == correct_ans:
-                        match_found = True
+            for correct_ans in correct_cleaned:
+                comparison = {
+                    "student": student_answer_cleaned,
+                    "correct": correct_ans,
+                    "equal": student_answer_cleaned == correct_ans,
+                    "student_repr": repr(student_answer_cleaned),
+                    "correct_repr": repr(correct_ans)
+                }
+                comparisons.append(comparison)
+                if student_answer_cleaned == correct_ans:
+                    match_found = True
 
             question_debug["comparisons"] = comparisons
             question_debug["is_correct"] = match_found
-
             if match_found:
                 score += 1
 
