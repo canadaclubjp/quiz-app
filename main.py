@@ -279,6 +279,26 @@ def save_to_google_sheets(submission: AnswerSubmission, quiz_id: int, score: int
     course_sheet.append_row(row)
 
 
+# --- Helper function for parsing correct answers with a custom delimiter ---
+def parse_correct_answers(raw):
+    """
+    Accepts a string or list. Splits on the '|' delimiter, trims whitespace, and returns a list of answers.
+    """
+    delimiter = '|'
+    answers = []
+    if isinstance(raw, str):
+        answers = [ans.strip() for ans in raw.split(delimiter)]
+    elif isinstance(raw, list):
+        for item in raw:
+            if isinstance(item, str) and delimiter in item:
+                answers.extend([ans.strip() for ans in item.split(delimiter)])
+            elif isinstance(item, str):
+                answers.append(item.strip())
+            else:
+                answers.append(item)
+    return [a for a in answers if a]
+
+
 # Replace one of your existing /test-log endpoints (you have two) with this:
 
 @app.get("/test-log")
@@ -461,11 +481,12 @@ async def update_quiz(quiz_id: int, quiz: QuizCreate, db: Session = Depends(get_
         db_quiz.description = quiz.description
         db.query(Question).filter(Question.quiz_id == quiz_id).delete()
         for q in quiz.questions:
+            parsed_correct_answers = parse_correct_answers(q.correct_answers)
             db_question = Question(
                 quiz_id=quiz_id,
                 question_text=q.question_text,
                 options=json.dumps(q.options) if q.options else None,
-                correct_answers=json.dumps(q.correct_answers),
+                correct_answers=json.dumps(parsed_correct_answers),
                 is_text_input=q.is_text_input,
                 image_url=q.image_url,
                 audio_url=q.audio_url,
@@ -663,11 +684,12 @@ async def add_quiz(quiz: QuizCreate, db: Session = Depends(get_db)):
 
         # Add questions
         for q in quiz.questions:
+            parsed_correct_answers = parse_correct_answers(q.correct_answers)
             db_question = Question(
                 quiz_id=db_quiz.id,
                 question_text=q.question_text,
                 options=json.dumps(q.options) if q.options else None,
-                correct_answers=json.dumps(q.correct_answers),
+                correct_answers=json.dumps(parsed_correct_answers),
                 is_text_input=q.is_text_input,
                 image_url=q.image_url,
                 audio_url=q.audio_url,
@@ -684,6 +706,8 @@ async def add_quiz(quiz: QuizCreate, db: Session = Depends(get_db)):
         db.rollback()
         logger.error(f"Error adding quiz: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to add quiz: {str(e)}")
+
+
 
 @app.get("/score/{user_id}/{quiz_id}")
 async def get_score(user_id: str, quiz_id: int, db: Session = Depends(get_db)):
