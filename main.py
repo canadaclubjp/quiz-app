@@ -282,22 +282,19 @@ def save_to_google_sheets(submission: AnswerSubmission, quiz_id: int, score: int
 # --- Helper function for parsing correct answers with a custom delimiter ---
 def parse_correct_answers(raw):
     """
-    Accepts a string or list. Splits on the '|' delimiter, trims whitespace, and returns a list of answers.
+    Parse correct_answers as a list of full strings. Splits on the '|' delimiter, trims whitespace.
     """
-    delimiter = '|'
-    answers = []
-    if isinstance(raw, str):
-        answers = [ans.strip() for ans in raw.split(delimiter)]
-    elif isinstance(raw, list):
-        for item in raw:
-            if isinstance(item, str) and delimiter in item:
-                answers.extend([ans.strip() for ans in item.split(delimiter)])
-            elif isinstance(item, str):
-                answers.append(item.strip())
-            else:
-                answers.append(item)
-    return [a for a in answers if a]
 
+    if isinstance(raw, list):
+        return [a.strip() for a in raw]
+    if isinstance(raw, str):
+        return [a.strip() for a in raw.split("|") if a.strip()]
+    return []
+
+def normalize_answer(ans):
+    if not isinstance(ans, str):
+        return ans
+    return ans.strip().lower()
 
 # Replace one of your existing /test-log endpoints (you have two) with this:
 
@@ -481,12 +478,12 @@ async def update_quiz(quiz_id: int, quiz: QuizCreate, db: Session = Depends(get_
         db_quiz.description = quiz.description
         db.query(Question).filter(Question.quiz_id == quiz_id).delete()
         for q in quiz.questions:
-            parsed_correct_answers = parse_correct_answers(q.correct_answers)
+            corrects = parse_correct_answers(q.correct_answers)
             db_question = Question(
                 quiz_id=quiz_id,
                 question_text=q.question_text,
                 options=json.dumps(q.options) if q.options else None,
-                correct_answers=json.dumps(parsed_correct_answers),
+                correct_answers=json.dumps(corrects),
                 is_text_input=q.is_text_input,
                 image_url=q.image_url,
                 audio_url=q.audio_url,
@@ -565,48 +562,48 @@ async def submit_quiz(quiz_id: int, submission: AnswerSubmission, admin: bool = 
     total = len(questions)
     score = 0
 
+    def normalize_answer(ans):
+        if not isinstance(ans, str):
+            return ans
+        return ans.strip().lower()
+
     for q in questions:
+        # Correct answers are stored as a JSON string of a list of STRINGS, each split by | at admin quiz creation/update.
         correct = json.loads(q.correct_answers) if q.correct_answers else []
+        # Defensive: if somehow a single string slipped through, split it here
+        if len(correct) == 1 and "|" in correct[0]:
+            correct = [a.strip() for a in correct[0].split("|") if a.strip()]
+
+        correct_cleaned = [normalize_answer(ans) for ans in correct]
         student_answer = submission.answers.get(str(q.id), [])
 
         # Enhanced logging
         logging.info(f"=== QUESTION {q.id} DEBUG ===")
         logging.info(f"Raw student_answer: {student_answer} (type: {type(student_answer)})")
         logging.info(f"Raw correct answers: {correct} (type: {type(correct)})")
-
-        # Strip prefixes (e.g., "A:", "D:") from both student answers and correct answers
-        def strip_prefix(answer):
-            if isinstance(answer, str):
-                for sep in [": ", ":"]:
-                    if sep in answer:
-                        return answer.split(sep, 1)[-1]
-            return answer
-
-        # Process correct answers
-        correct_cleaned = [strip_prefix(ans) for ans in correct]
         logging.info(f"Q{q.id}: Correct cleaned={correct_cleaned}")
 
         if q.is_text_input:
             if isinstance(student_answer, str):
-                student_answer = student_answer
+                student_answer_cleaned = normalize_answer(student_answer)
             elif isinstance(student_answer, list) and student_answer:
-                student_answer = student_answer[0]
+                student_answer_cleaned = normalize_answer(student_answer[0])
             else:
-                student_answer = ""
-            student_answer_cleaned = strip_prefix(student_answer)
+                student_answer_cleaned = ""
             logging.info(f"Text answer cleaned: '{student_answer_cleaned}'")
-            if student_answer_cleaned in [strip_prefix(ans) for ans in correct_cleaned]:
+            if student_answer_cleaned in correct_cleaned:
                 score += 1
                 logging.info(f"Q{q.id}: TEXT CORRECT - Score incremented to {score}")
             else:
-                logging.info(f"Q{q.id}: TEXT INCORRECT - Expected one of {[strip_prefix(ans) for ans in correct_cleaned]}, Got '{student_answer_cleaned}'")
+                logging.info(f"Q{q.id}: TEXT INCORRECT - Expected one of {correct_cleaned}, Got '{student_answer_cleaned}'")
         else:
-            # Multiple choice processing - FIXED for radio buttons (single selection)
+            # Multiple choice processing - for radio buttons (single selection)
             if isinstance(student_answer, list) and student_answer:
-                student_answer = student_answer[0]  # take the first answer if somehow it's an array
-            elif not isinstance(student_answer, str):
-                student_answer = ""
-            student_answer_cleaned = strip_prefix(student_answer)
+                student_answer_cleaned = normalize_answer(student_answer[0])
+            elif isinstance(student_answer, str):
+                student_answer_cleaned = normalize_answer(student_answer)
+            else:
+                student_answer_cleaned = ""
             logging.info(f"MC answer cleaned: '{student_answer_cleaned}'")
 
             if student_answer_cleaned in correct_cleaned:
@@ -652,6 +649,8 @@ async def submit_quiz(quiz_id: int, submission: AnswerSubmission, admin: bool = 
     debug_data = {}
     for q in questions:
         correct = json.loads(q.correct_answers) if q.correct_answers else []
+        if len(correct) == 1 and "|" in correct[0]:
+            correct = [a.strip() for a in correct[0].split("|") if a.strip()]
         student_answer = submission.answers.get(str(q.id), [])
         debug_data.update({
             f"question_{q.id}_raw_correct": correct,
@@ -672,11 +671,12 @@ async def add_quiz(quiz: QuizCreate, db: Session = Depends(get_db)):
         if not quiz.questions:
             raise HTTPException(status_code=400, detail="Quiz must have at least one question")
         for q in quiz.questions:
-            if not q.correct_answers:
+            # Parse correct answers
+            corrects = parse_correct_answers(q.correct_answers)
+            if not corrects:
                 raise HTTPException(status_code=400, detail="Each question must have at least one correct answer")
             if q.options and len(q.options) < 2:
                 raise HTTPException(status_code=400, detail="Multiple-choice questions must have at least two options")
-
         # Create quiz but don't commit yet
         db_quiz = Quiz(title=quiz.title, description=quiz.description)
         db.add(db_quiz)
@@ -684,12 +684,12 @@ async def add_quiz(quiz: QuizCreate, db: Session = Depends(get_db)):
 
         # Add questions
         for q in quiz.questions:
-            parsed_correct_answers = parse_correct_answers(q.correct_answers)
+            corrects = parse_correct_answers(q.correct_answers)
             db_question = Question(
                 quiz_id=db_quiz.id,
                 question_text=q.question_text,
                 options=json.dumps(q.options) if q.options else None,
-                correct_answers=json.dumps(parsed_correct_answers),
+                correct_answers=json.dumps(corrects),
                 is_text_input=q.is_text_input,
                 image_url=q.image_url,
                 audio_url=q.audio_url,
