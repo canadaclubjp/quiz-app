@@ -318,9 +318,14 @@ export default function AdminQuizApp() {
                         )}
                         <input
                             type="text"
-                            placeholder="Correct Answers (comma-separated)"
-                            value={q.correctAnswers.join(",")}
-                            onChange={(e) => updateQuestion(qIndex, "correctAnswers", e.target.value.split(","))}
+                            placeholder="Correct Answers (pipe-separated: So do I.|Me too.)"
+                            value={q.correctAnswers.join(" | ")}
+                            onChange={(e) => {
+                                // Always split on | and trim each answer
+                                const answersArr = e.target.value.split("|")).map(ans => ans.trim()).filter(ans => ans.length > 0);
+                                updateQuestion(qIndex, "correctAnswers", answersArr);
+
+                            }}
                             style={{ width: "100%", marginBottom: "5px", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
                         />
                         <input
