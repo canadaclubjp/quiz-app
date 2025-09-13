@@ -97,6 +97,11 @@ except Exception as e:
 app = FastAPI()
 logger.info("FastAPI app created")
 
+#  Add temporarily to check path for DB and remove after
+@app.get("/debug/dbpath")
+def debug_dbpath():
+    return {"cwd": os.getcwd()}
+
 # Add root route
 
 @app.get("/test-log")  # Use this temporarily to test logging
