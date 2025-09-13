@@ -322,7 +322,7 @@ export default function AdminQuizApp() {
                             value={q.correctAnswers.join(" | ")}
                             onChange={(e) => {
                                 // Always split on | and trim each answer
-                                const answersArr = e.target.value.split("|")).map(ans => ans.trim()).filter(ans => ans.length > 0);
+                                const answersArr = e.target.value.split("|").map(ans => ans.trim()).filter(ans => ans.length > 0);
                                 updateQuestion(qIndex, "correctAnswers", answersArr);
 
                             }}
