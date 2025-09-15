@@ -62,6 +62,8 @@ except Exception as e:
     raise
 
 
+#  Comment added for testing purposes
+
 # Open StudentData spreadsheet
 try:
     logger.info("Opening StudentData spreadsheet")
