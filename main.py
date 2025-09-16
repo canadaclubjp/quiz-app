@@ -150,6 +150,13 @@ def get_db():
     finally:
         db.close()
 
+
+@app.get("/debug/quizzes")
+def debug_quizzes(db: Session = Depends(get_db)):
+    quizzes = db.query(Quiz).all()
+    return [{"id": q.id, "title": q.title} for q in quizzes]
+
+
 # Pydantic models
 class StudentVerification(BaseModel):
     student_number: str
