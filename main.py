@@ -99,6 +99,19 @@ except Exception as e:
 app = FastAPI()
 logger.info("FastAPI app created")
 
+origins = [
+    "https://quiz-frontend-frontend.vercel.app",  # your Vercel frontend
+    "http://localhost:3000",                      # for local dev, optional
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,            # or ["*"] for any origin (less secure)
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 #  Add temporarily to check path for DB and remove after
 @app.get("/debug/dbpath")
 def debug_dbpath():
