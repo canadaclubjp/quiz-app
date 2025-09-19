@@ -26,7 +26,6 @@ import pytz
 import uvicorn  # Add uvicorn import for running the app
 import base64
 
-
 print(f"=== main.py started at {datetime.now()} ===")
 
 logging.basicConfig(level=logging.INFO)
@@ -34,7 +33,6 @@ logger = logging.getLogger(__name__)
 
 logger.info("Starting main.py import")
 logging.info(f"Credentials check: {os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')}")
-
 
 try:
     logger.info("Loading credentials from environment variable")
@@ -60,7 +58,6 @@ try:
 except Exception as e:
     logger.error(f"Failed to load Google credentials: {str(e)}")
     raise
-
 
 #  Comment added for testing purposes
 
@@ -99,14 +96,16 @@ except Exception as e:
 app = FastAPI()
 logger.info("FastAPI app created")
 
+# Only keep ONE CORS middleware block -- this is the corrected version:
 origins = [
     "https://quiz-frontend-frontend.vercel.app",  # your Vercel frontend
-    "http://localhost:3000",                      # for local dev, optional
+    "https://*.vercel.app",                      # wildcard for Vercel subdomains
+    "http://localhost:3000",                     # for local dev, optional
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,            # or ["*"] for any origin (less secure)
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -136,22 +135,6 @@ async def read_root():
         "/generate_qr/{quiz_id}/{course_number}"
     ]}
 
-# Rest of your existing code (CORS, get_db, models, etc.) remains unchanged
-
-app.add_middleware(
-    CORSMiddleware,
-    # allow_origins=["*"],
-    # allow_credentials=False,  # must be false when allow_origins["*"]
-    allow_origins=[
-        # "http://localhost:3000",
-        "https://quiz-frontend-frontend.vercel.app",
-        "https://*.vercel.app",],  # ✅ allow all Vercel subdomains (wildcard support added in FastAPI > 0.65)
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
 def get_db():
     logger.info(f"SessionLocal status: {SessionLocal}")
     if SessionLocal is None:
@@ -163,12 +146,10 @@ def get_db():
     finally:
         db.close()
 
-
 @app.get("/debug/quizzes")
 def debug_quizzes(db: Session = Depends(get_db)):
     quizzes = db.query(Quiz).all()
     return [{"id": q.id, "title": q.title} for q in quizzes]
-
 
 # Pydantic models
 class StudentVerification(BaseModel):
@@ -305,7 +286,6 @@ def save_to_google_sheets(submission: AnswerSubmission, quiz_id: int, score: int
     logging.info(f"Appending to Course_{course_sheet_name}: {row}")
     course_sheet.append_row(row)
 
-
 # --- Helper function for parsing correct answers with a custom delimiter ---
 def parse_correct_answers(raw):
     """
@@ -322,8 +302,6 @@ def normalize_answer(ans):
     if not isinstance(ans, str):
         return ans
     return ans.strip().lower()
-
-# Replace one of your existing /test-log endpoints (you have two) with this:
 
 @app.get("/test-log")
 async def test_log(question_id: int = 53, db: Session = Depends(get_db)):
@@ -343,7 +321,6 @@ async def test_log(question_id: int = 53, db: Session = Depends(get_db)):
         }
     except Exception as e:
         return {"error": str(e)}
-
 
 @app.post("/verify_student/")
 async def verify_student(data: StudentVerification):
@@ -543,7 +520,6 @@ async def delete_quiz(quiz_id: int, db: Session = Depends(get_db)):
         logger.error(f"Error deleting quiz: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to delete quiz: {str(e)}")
 
-
 @app.post("/submit_quiz/{quiz_id}")
 async def submit_quiz(quiz_id: int, submission: AnswerSubmission, admin: bool = Query(False), db: Session = Depends(get_db)):
     # Skip student validation for admin mode
@@ -734,8 +710,6 @@ async def add_quiz(quiz: QuizCreate, db: Session = Depends(get_db)):
         logger.error(f"Error adding quiz: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to add quiz: {str(e)}")
 
-
-
 @app.get("/score/{user_id}/{quiz_id}")
 async def get_score(user_id: str, quiz_id: int, db: Session = Depends(get_db)):
     try:
@@ -753,7 +727,6 @@ def clear_scores(db: Session = Depends(get_db)):
     db.query(Score).delete()
     db.commit()
     return {"message": "Scores cleared"}
-
 
 @app.get("/generate_qr/{quiz_id}/{course_number}")
 async def generate_qr(quiz_id: int, course_number: str, db: Session = Depends(get_db)):
@@ -789,112 +762,6 @@ async def generate_qr(quiz_id: int, course_number: str, db: Session = Depends(ge
     except Exception as e:
         logger.error(f"Failed to generate QR code: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to generate QR code: {str(e)}")
-
-
-# Add this new endpoint to your main.py (anywhere after the app = FastAPI() line)
-
-# @app.post("/debug_scoring/{quiz_id}")
-# async def debug_scoring(quiz_id: int, submission: AnswerSubmission, db: Session = Depends(get_db)):
-#     """Debug endpoint to see exactly what's happening in scoring logic"""
-#
-#     quiz = db.query(Quiz).filter(Quiz.id == quiz_id).first()
-#     if not quiz:
-#         raise HTTPException(status_code=404, detail="Quiz not found")
-#
-#     questions = db.query(Question).filter(Question.quiz_id == quiz_id).all()
-#     debug_info = []
-#     score = 0
-#
-#     for q in questions:
-#         correct = json.loads(q.correct_answers) if q.correct_answers else []
-#         student_answer = submission.answers.get(str(q.id), [])
-#
-#         question_debug = {
-#             "question_id": q.id,
-#             "question_text": q.question_text,
-#             "is_text_input": q.is_text_input,
-#             "raw_student_answer": student_answer,
-#             "raw_student_type": str(type(student_answer)),
-#             "raw_correct_answers": correct,
-#             "raw_correct_type": str(type(correct))
-#         }
-#
-#         # Strip prefixes function
-#         def strip_prefix(answer):
-#             if isinstance(answer, str):
-#                 for sep in [": ", ":"]:
-#                     if sep in answer:
-#                         return answer.split(sep, 1)[-1].strip()
-#             return answer.strip()
-#
-#         # Process correct answers
-#         correct_cleaned = [strip_prefix(ans) for ans in correct]
-#         question_debug["correct_cleaned"] = correct_cleaned
-#
-#         if q.is_text_input:
-#             if isinstance(student_answer, str):
-#                 student_answer_processed = student_answer
-#             elif isinstance(student_answer, list) and student_answer:
-#                 student_answer_processed = student_answer[0]
-#             else:
-#                 student_answer_processed = ""
-#             student_answer_cleaned = strip_prefix(student_answer_processed)
-#             question_debug["student_answer_cleaned"] = student_answer_cleaned
-#             question_debug["scoring_method"] = "text_input"
-#
-#             # Check if correct
-#             is_correct = student_answer_cleaned.lower() in [ans.lower() for ans in correct_cleaned]
-#             question_debug["is_correct"] = is_correct
-#             question_debug["comparison_details"] = {
-#                 "student_lower": student_answer_cleaned.lower(),
-#                 "correct_lower": [ans.lower() for ans in correct_cleaned]
-#             }
-#
-#             if is_correct:
-#                 score += 1
-#
-#         else:
-#             # Multiple choice
-#             student_answer = student_answer if isinstance(student_answer, list) else []
-#             student_answer_cleaned = [strip_prefix(ans) for ans in student_answer]
-#             question_debug["student_answer_cleaned"] = student_answer_cleaned
-#             question_debug["scoring_method"] = "multiple_choice"
-#
-#             # Check each comparison
-#             comparisons = []
-#             match_found = False
-#
-#             for student_ans in student_answer_cleaned:
-#                 for correct_ans in correct_cleaned:
-#                     comparison = {
-#                         "student": student_ans,
-#                         "correct": correct_ans,
-#                         "equal": student_ans == correct_ans,
-#                         "student_repr": repr(student_ans),
-#                         "correct_repr": repr(correct_ans)
-#                     }
-#                     comparisons.append(comparison)
-#                     if student_ans == correct_ans:
-#                         match_found = True
-#
-#             question_debug["comparisons"] = comparisons
-#             question_debug["is_correct"] = match_found
-#
-#             if match_found:
-#                 score += 1
-#
-#         question_debug["points_awarded"] = 1 if question_debug["is_correct"] else 0
-#         debug_info.append(question_debug)
-#
-#     return {
-#         "quiz_id": quiz_id,
-#         "quiz_title": quiz.title,
-#         "total_questions": len(questions),
-#         "final_score": score,
-#         "student_number": submission.student_number,
-#         "debug_details": debug_info
-#     }
-#
 
 @app.post("/debug_scoring/{quiz_id}")
 async def debug_scoring(quiz_id: int, submission: AnswerSubmission, db: Session = Depends(get_db)):
@@ -995,9 +862,6 @@ async def debug_scoring(quiz_id: int, submission: AnswerSubmission, db: Session 
         "debug_details": debug_info
     }
 
-
-# Add this simple endpoint to your main.py to check what's in the database
-
 @app.get("/check_question/{question_id}")
 async def check_question(question_id: int, db: Session = Depends(get_db)):
     question = db.query(Question).filter(Question.id == question_id).first()
@@ -1013,19 +877,5 @@ async def check_question(question_id: int, db: Session = Depends(get_db)):
         "is_text_input": question.is_text_input
     }
 
-# Comments added for testing
-# Also modify your submit_quiz endpoint to return debug info (replace the return statement at the end):
-# Change this line at the end of submit_quiz:
-# return {"score": score, "total": total}
-#
-# To this:
-# return {
-#     "score": score,
-#     "total": total,
-#     "debug_url": f"/debug_scoring/{quiz_id}",
-#     "message": "Use the debug_url with the same submission data to see detailed scoring info"
-# }
-
-# Run the FastAPI app with uvicorn on 0.0.0.0:80
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=80)
