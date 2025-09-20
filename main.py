@@ -114,6 +114,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/debug/cors")
+def debug_cors():
+    return {"message": "CORS middleware is present"}
+
 #  Add temporarily to check path for DB and remove after
 @app.get("/debug/dbpath")
 def debug_dbpath():
