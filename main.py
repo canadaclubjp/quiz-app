@@ -1,3 +1,5 @@
+from dotenv import load_dotenv
+load_dotenv()
 import os
 import logging
 from fastapi import FastAPI, HTTPException, Depends
@@ -105,7 +107,7 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["https://quiz-frontend-frontend.vercel.app"],  #  frontend domain
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
