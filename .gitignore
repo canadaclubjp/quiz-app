@@ -36,4 +36,4 @@ yarn-error.log*
 
 # Allow specific database files
 !quiz.db
-!quizzes.db
+!quizzes.dbtest.json
