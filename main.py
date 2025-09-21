@@ -107,8 +107,8 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    #  allow_origins=["https://quiz-frontend-frontend.vercel.app"],  #  frontend domain
-    allow_origins=["*"],  #  TEMP for debugging
+    allow_origins=["https://quiz-frontend-frontend.vercel.app"],  #  frontend domain
+    #  allow_origins=["*"],  #  TEMP for debugging
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
