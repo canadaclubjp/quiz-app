@@ -1,0 +1,44 @@
+name: Backup Fly.io SQLite DB
+
+on:
+  schedule:
+    # Runs daily at 3am JST (18:00 UTC)
+    - cron: '0 18 * * *'
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    - name: Install Fly.io CLI
+      run: |
+        curl -L https://fly.io/install.sh | sh
+        export PATH="$HOME/.fly/bin:$PATH"
+
+    - name: Download quiz.db from Fly.io
+      env:
+        FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      run: |
+        # Set your app name and machine ID here
+        APP_NAME="quiz-app-backend-jp"
+        MACHINE_ID="d8d9eeeb933208"
+        BACKUP_DIR="backups"
+        DATE=$(date +'%Y-%m-%d-%H%M')
+        mkdir -p $BACKUP_DIR
+        fly ssh sftp shell -a $APP_NAME --machine $MACHINE_ID <<EOF
+        get /data/quiz.db $BACKUP_DIR/quiz.db.$DATE.bak
+        exit
+        EOF
+
+    - name: Commit and Push Backup
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add backups/
+        git commit -m "Backup quiz.db at $DATE"
+        git push
+        
