@@ -296,14 +296,31 @@ def save_to_google_sheets(submission: AnswerSubmission, quiz_id: int, score: int
 # --- Helper function for parsing correct answers with a custom delimiter ---
 def parse_correct_answers(raw):
     """
-    Parse correct_answers as a list of full strings. Splits on the '|' delimiter, trims whitespace.
+    Accepts a string or list. Splits on the '|' delimiter, trims whitespace,
+    and replaces curly apostrophes with straight ones.
     """
+    def normalize_apostrophe(s):
+        # Replace curly apostrophes and quotes with straight ones
+        return (
+            s.replace('\u2019', "'")
+             .replace('\u2018', "'")
+             .replace('’', "'")
+             .replace('‘', "'")
+        )
 
-    if isinstance(raw, list):
-        return [a.strip() for a in raw]
+    answers = []
     if isinstance(raw, str):
-        return [a.strip() for a in raw.split("|") if a.strip()]
-    return []
+        answers = [normalize_apostrophe(ans.strip()) for ans in raw.split('|')]
+    elif isinstance(raw, list):
+        for item in raw:
+            if isinstance(item, str) and '|' in item:
+                answers.extend([normalize_apostrophe(ans.strip()) for ans in item.split('|')])
+            elif isinstance(item, str):
+                answers.append(normalize_apostrophe(item.strip()))
+            else:
+                answers.append(item)
+    return [a for a in answers if a]
+
 
 def normalize_answer(ans):
     if not isinstance(ans, str):
