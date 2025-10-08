@@ -1,0 +1,46 @@
+name: Backup Fly.io SQLite DB
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    # Runs daily at 3am JST (18:00 UTC)
+    - cron: '0 18 * * *'
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Install Flyctl
+      uses: superfly/flyctl-actions/setup-flyctl@v1
+
+    - name: Download quiz.db from Fly.io
+      env:
+        FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      run: |
+        APP_NAME="quiz-app-backend-jp"
+        MACHINE_ID="d8d9eeeb933208"
+        BACKUP_DIR="backups"
+        DATE=$(date +'%Y-%m-%d-%H%M')
+        mkdir -p $BACKUP_DIR
+        flyctl ssh sftp shell -a $APP_NAME --machine $MACHINE_ID <<EOF
+        get /data/quiz.db $BACKUP_DIR/quiz.db.$DATE.bak
+        exit
+        EOF
+
+    - name: Commit and Push Backup
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add backups/
+        git commit -m "Backup quiz.db at $(date +'%Y-%m-%d-%H%M')" || echo "Nothing to commit"
+        git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
+        git push origin HEAD:${{ github.ref }}
