@@ -407,24 +407,27 @@ async def read_quizzes(db: Session = Depends(get_db)):
 async def get_quiz(quiz_id: int, student_number: str, course_number: str, admin: bool = Query(False), db: Session = Depends(get_db)):
     # Skip student validation and existing score check for admin mode
     if not admin:
-        sheet = spreadsheet.sheet1
+        course_sheet_name = course_number.lstrip("0")
         try:
+            sheet = spreadsheet.worksheet(course_sheet_name)
             all_data = sheet.get_all_records()
-            logging.info(f"Fetched {len(all_data)} records from Google Sheet for quiz load")
-            normalized_course = course_number.lstrip("0")
+            logging.info(f"Fetched {len(all_data)} records from class sheet '{course_sheet_name}' for quiz load")
+            normalized_course = course_sheet_name
             logging.info(f"Validating quiz load: student_number={student_number}, course_number={normalized_course}")
             student_valid = False
             for row in all_data:
                 sheet_student = str(row.get("Student Number", "")).strip()
                 sheet_course = str(row.get("Course Number", "")).strip()
-                if (sheet_student == student_number and
-                        sheet_course == normalized_course):
+                if sheet_student == student_number:
                     student_valid = True
-                    logging.info(f"Match found: Sheet Student={sheet_student}, Course={sheet_course}")
+                    logging.info(f"Match found: Sheet Student={sheet_student}")
                     break
             if not student_valid:
-                logging.warning(f"No match for student_number={student_number}, course_number={normalized_course}")
+                logging.warning(f"No match for student_number={student_number} in course sheet {normalized_course}")
                 raise HTTPException(status_code=403, detail="Invalid student number for this course")
+        except gspread.WorksheetNotFound:
+            logging.warning(f"Course sheet '{course_sheet_name}' not found in Google Sheets")
+            raise HTTPException(status_code=400, detail=f"Course sheet '{course_sheet_name}' not found in Google Sheets")
         except Exception as e:
             logging.error(f"Error verifying student: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Failed to validate student: {str(e)}")
@@ -548,25 +551,30 @@ async def delete_quiz(quiz_id: int, db: Session = Depends(get_db)):
 async def submit_quiz(quiz_id: int, submission: AnswerSubmission, admin: bool = Query(False), db: Session = Depends(get_db)):
     # Skip student validation for admin mode
     if not admin:
-        sheet = spreadsheet.sheet1
+        course_number = submission.course_number
+        student_number = submission.student_number
+        course_sheet_name = course_number.lstrip("0")
         try:
+            sheet = spreadsheet.worksheet(course_sheet_name)
             all_data = sheet.get_all_records()
-            logging.info(f"Fetched {len(all_data)} records from Google Sheet for validation")
-            normalized_course = submission.course_number.lstrip("0")
-            logging.info(f"Validating: student_number={submission.student_number}, course_number={normalized_course}")
+            logging.info(f"Fetched {len(all_data)} records from class sheet '{course_sheet_name}' for quiz load")
+            normalized_course = course_sheet_name
+            logging.info(f"Validating quiz load: student_number={student_number}, course_number={normalized_course}")
             student_valid = False
             for row in all_data:
                 sheet_student = str(row.get("Student Number", "")).strip()
-                sheet_course = str(row.get("Course Number", "")).strip()
-                if (sheet_student == submission.student_number and
-                        sheet_course == normalized_course):
+                # You may not need to check sheet_course since this sheet is already for this course
+                if sheet_student == student_number:
                     student_valid = True
-                    logging.info(f"Match found: Sheet Student={sheet_student}, Course={sheet_course}")
+                    logging.info(f"Match found: Sheet Student={sheet_student}")
                     break
             if not student_valid:
-                logging.warning(
-                    f"No match for student_number={submission.student_number}, course_number={normalized_course}")
+                logging.warning(f"No match for student_number={student_number} in course sheet {normalized_course}")
                 raise HTTPException(status_code=403, detail="Invalid student number for this course")
+        except gspread.WorksheetNotFound:
+            logging.error(f"Course sheet '{course_sheet_name}' not found in Google Sheets")
+            raise HTTPException(status_code=400,
+                                detail=f"Course sheet '{course_sheet_name}' not found in Google Sheets")
         except Exception as e:
             logging.error(f"Error verifying student: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Failed to validate student: {str(e)}")
