@@ -351,7 +351,8 @@ async def verify_student(data: StudentVerification):
     sheet = spreadsheet.sheet1
     try:
         all_data = sheet.get_all_records()
-        logging.info(f"Fetched {len(all_data)} records from Google Sheet")
+        #  logging.info(f"Fetched {len(all_data)} records from Google Sheet")
+        logging.info(f"Sheet headers: {list(all_data[0].keys())}")
         if not all_data:
             raise HTTPException(status_code=500, detail="No data found in Google Sheet")
         logging.info(f"Sheet headers: {list(all_data[0].keys())}")
