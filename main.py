@@ -360,8 +360,11 @@ async def verify_student(data: StudentVerification):
         logging.info(f"Sheet headers: {list(all_data[0].keys())}")
         normalized_course = data.course_number.lstrip("0")
         for row in all_data:
-            if (str(row["Student Number"]) == data.student_number and
-                    str(row["Course Number"]) == normalized_course):
+            sheet_student = str(row.get("Student Number", "")).strip()
+            sheet_course = str(row.get("Course Number", "")).strip()
+            logging.info(
+                f"Checking sheet_student={sheet_student}, sheet_course={sheet_course}, submitted_student={data.student_number}, submitted_course={normalized_course}")
+            if sheet_student == str(data.student_number).strip() and sheet_course == str(normalized_course).strip():
                 logging.info(f"Student {data.student_number} verified for course {data.course_number}")
                 return {"status": "valid", "message": "Student verified"}
         logging.warning(
