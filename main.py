@@ -414,7 +414,10 @@ async def get_quiz(quiz_id: int, student_number: str, course_number: str, admin:
         try:
             sheet = spreadsheet.worksheet(course_sheet_name)
             all_data = sheet.get_all_records()
-            logging.info(f"Fetched {len(all_data)} records from class sheet '{course_sheet_name}' for quiz load")
+            logging.info(f"Sheet headers from Google Sheets: {list(all_data[0].keys())}")
+            for row in all_data:
+                logging.info(f"Row: {row}")
+            #  logging.info(f"Fetched {len(all_data)} records from class sheet '{course_sheet_name}' for quiz load")
             normalized_course = course_sheet_name
             logging.info(f"Validating quiz load: student_number={student_number}, course_number={normalized_course}")
             student_valid = False
