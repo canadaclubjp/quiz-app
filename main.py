@@ -690,11 +690,18 @@ async def submit_quiz(quiz_id: int, submission: AnswerSubmission, admin: bool = 
     debug_data = {}
     for q in questions:
         correct = json.loads(q.correct_answers) if q.correct_answers else []
-        if len(correct) == 1 and "|" in correct[0]:
-            correct = [a.strip() for a in correct[0].split("|") if a.strip()]
+        # Flatten all correct answer strings by splitting on '|'
+        correct_flat = []
+        for c in correct:
+            if isinstance(c, str) and "|" in c:
+                correct_flat.extend([a.strip() for a in c.split("|") if a.strip()])
+            elif isinstance(c, str):
+                correct_flat.append(c.strip())
+            else:
+                correct_flat.append(c)
         student_answer = submission.answers.get(str(q.id), [])
         debug_data.update({
-            f"question_{q.id}_raw_correct": correct,
+            f"question_{q.id}_raw_correct": correct_flat,
             f"question_{q.id}_student_answer": student_answer
         })
     debug_data["submission_answers"] = submission.answers
