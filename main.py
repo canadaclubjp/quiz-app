@@ -605,11 +605,17 @@ async def submit_quiz(quiz_id: int, submission: AnswerSubmission, admin: bool = 
     for q in questions:
         # Correct answers are stored as a JSON string of a list of STRINGS, each split by | at admin quiz creation/update.
         correct = json.loads(q.correct_answers) if q.correct_answers else []
-        # Defensive: if somehow a single string slipped through, split it here
-        if len(correct) == 1 and "|" in correct[0]:
-            correct = [a.strip() for a in correct[0].split("|") if a.strip()]
+        # FIX: Flatten all correct answer strings by splitting on '|'
+        correct_flat = []
+        for c in correct:
+            if isinstance(c, str) and "|" in c:
+                correct_flat.extend([a.strip() for a in c.split("|") if a.strip()])
+            elif isinstance(c, str):
+                correct_flat.append(c.strip())
+            else:
+                correct_flat.append(c)
 
-        correct_cleaned = [normalize_answer(ans) for ans in correct]
+        correct_cleaned = [normalize_answer(ans) for ans in correct_flat]
         student_answer = submission.answers.get(str(q.id), [])
 
         # Enhanced logging
