@@ -830,6 +830,16 @@ async def debug_scoring(quiz_id: int, submission: AnswerSubmission, db: Session 
 
     for q in questions:
         correct = json.loads(q.correct_answers) if q.correct_answers else []
+        # PATCH: Flatten all correct answer strings by splitting on '|'
+        correct_flat = []
+        for c in correct:
+            if isinstance(c, str) and "|" in c:
+                correct_flat.extend([a.strip() for a in c.split("|") if a.strip()])
+            elif isinstance(c, str):
+                correct_flat.append(c.strip())
+            else:
+                correct_flat.append(c)
+
         student_answer = submission.answers.get(str(q.id), [])
 
         question_debug = {
@@ -838,11 +848,11 @@ async def debug_scoring(quiz_id: int, submission: AnswerSubmission, db: Session 
             "is_text_input": q.is_text_input,
             "raw_student_answer": student_answer,
             "raw_student_type": str(type(student_answer)),
-            "raw_correct_answers": correct,
+            "raw_correct_answers": correct_flat,
             "raw_correct_type": str(type(correct))
         }
 
-        correct_cleaned = [normalize(ans) for ans in correct]
+        correct_cleaned = [normalize(ans) for ans in correct_flat]
         question_debug["correct_cleaned"] = correct_cleaned
 
         if q.is_text_input:
