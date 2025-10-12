@@ -351,7 +351,6 @@ async def verify_student(data: StudentVerification):
     sheet = spreadsheet.sheet1
     try:
         all_data = sheet.get_all_records()
-        #  logging.info(f"Fetched {len(all_data)} records from Google Sheet")
         logging.info(f"Sheet headers: {list(all_data[0].keys())}")
         for row in all_data:
             logging.info(f"Row: {row}")
@@ -373,6 +372,7 @@ async def verify_student(data: StudentVerification):
     except Exception as e:
         logging.error(f"Error verifying student: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Verification failed: {str(e)}")
+
 
 @app.get("/proxy_media/")
 async def proxy_media(url: str):
@@ -420,16 +420,16 @@ async def get_quiz(quiz_id: int, student_number: str, course_number: str, admin:
             logging.info(f"Sheet headers from Google Sheets: {list(all_data[0].keys())}")
             for row in all_data:
                 logging.info(f"Row: {row}")
-            #  logging.info(f"Fetched {len(all_data)} records from class sheet '{course_sheet_name}' for quiz load")
             normalized_course = course_sheet_name
             logging.info(f"Validating quiz load: student_number={student_number}, course_number={normalized_course}")
             student_valid = False
             for row in all_data:
                 sheet_student = str(row.get("Student Number", "")).strip()
                 sheet_course = str(row.get("Course Number", "")).strip()
-                if sheet_student == student_number:
+                logging.info(f"Checking sheet_student={sheet_student}, sheet_course={sheet_course}, submitted_student={student_number}, submitted_course={normalized_course}")
+                if sheet_student == str(student_number).strip() and sheet_course == str(normalized_course).strip():
                     student_valid = True
-                    logging.info(f"Match found: Sheet Student={sheet_student}")
+                    logging.info(f"Match found: Sheet Student={sheet_student}, Sheet Course={sheet_course}")
                     break
             if not student_valid:
                 logging.warning(f"No match for student_number={student_number} in course sheet {normalized_course}")
@@ -440,6 +440,7 @@ async def get_quiz(quiz_id: int, student_number: str, course_number: str, admin:
         except Exception as e:
             logging.error(f"Error verifying student: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Failed to validate student: {str(e)}")
+
 
     quiz = db.query(Quiz).filter(Quiz.id == quiz_id).first()
     if not quiz:
