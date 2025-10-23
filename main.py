@@ -27,6 +27,7 @@ import logging
 import pytz
 import uvicorn  # Add uvicorn import for running the app
 import base64
+import re
 
 print(f"=== main.py started at {datetime.now()} ===")
 
@@ -325,6 +326,9 @@ def parse_correct_answers(raw):
 def normalize_answer(ans):
     if not isinstance(ans, str):
         return ans
+    ans = ans.strip().lower()
+    ans = re.sub(r"[^\w\s]", "", ans)  # Remove punctuation
+    ans = re.sub(r"\s+", " ", ans)  # Normalize spaces
     return ans.strip().lower()
 
 @app.get("/test-log")
@@ -610,6 +614,9 @@ async def submit_quiz(quiz_id: int, submission: AnswerSubmission, admin: bool = 
     def normalize_answer(ans):
         if not isinstance(ans, str):
             return ans
+        ans = ans.strip().lower()
+        ans = re.sub(r"[^\w\s]", "", ans)  # Remove punctuation
+        ans = re.sub(r"\s+", " ", ans)  # Normalize spaces
         return ans.strip().lower()
 
     for q in questions:
