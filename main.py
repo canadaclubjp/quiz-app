@@ -352,7 +352,7 @@ async def test_log(question_id: int = 53, db: Session = Depends(get_db)):
 
 @app.post("/verify_student/")
 async def verify_student(data: StudentVerification):
-    sheet = spreadsheet.sheet1
+    sheet = spreadsheet.worksheet("AllQuizResponses")
     try:
         all_data = sheet.get_all_records()
         logging.info(f"Sheet headers: {list(all_data[0].keys())}")
