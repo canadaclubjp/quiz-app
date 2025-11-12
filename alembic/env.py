@@ -8,6 +8,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 print("Loading env.py")
 from database import Base
 print("Imported Base")
+from models import Quiz, Question, Score
 
 config = context.config
 if config.config_file_name is not None:

@@ -9,3 +9,4 @@ backoff==2.2.1
 qrcode==7.4.2
 pillow==10.4.0
 pytz==2024.2
+python-dotenv

@@ -1,21 +1,21 @@
 # Use an official Python runtime as a parent image
-FROM python:3.9-slim
+FROM python:3.10
 
 # Set the working directory
 WORKDIR /app
 
 # Install sqlite3
-RUN apt-get update && apt-get install -y sqlite3 && rm -rf /var/lib/apt/lists/*
+#RUN apt-get update && apt-get install -y sqlite3 && rm -rf /var/lib/apt/lists/*
 
-# Copy all project files (including main.py, quiz.db, start.sh, etc.)
 
-COPY . .
+COPY main.py .
+COPY database.py .
+COPY models.py .
+COPY requirements.txt .
+COPY quiz.db /data/quiz.db
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-
-# Ensure start.sh is executable
-RUN chmod +x /app/start.sh
 
 # Make port 80 available
 EXPOSE 80

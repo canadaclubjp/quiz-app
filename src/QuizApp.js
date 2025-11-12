@@ -38,7 +38,7 @@ export default function QuizApp() {
         if (isAdminMode && quizId && courseNumber) {
             fetchQuiz();
         }
-    }, [isAdminMode, quizId, courseNumber]);
+    }, [isAdminMode, quizId, courseNumber, fetchQuiz]);
 
     const BACKEND_URL = "https://quiz-app-backend-jp.fly.dev";
 
@@ -116,7 +116,7 @@ export default function QuizApp() {
             console.error("Error submitting quiz:", err);
             setError(err.message);
         }
-    }, [studentNumber, firstNameEnglish, lastNameEnglish, courseNumber, quizId, answers, submitted]);
+    }, [studentNumber, firstNameEnglish, lastNameEnglish, courseNumber, quizId, answers, submitted, isAdminMode]);
 
     useEffect(() => {
         if (timeLeft === null || submitted) return;
@@ -133,10 +133,10 @@ export default function QuizApp() {
         setAnswers((prev) => ({ ...prev, [questionId]: value }));
     };
 
-    const handleRadioChange = (questionId, value) => {
-        console.log(`Q${questionId} - Radio Selection:`, value);
-        setAnswers((prev) => ({ ...prev, [questionId]: value }));
-    };
+//    const handleRadioChange = (questionId, value) => {
+//        console.log(`Q${questionId} - Radio Selection:`, value);
+//        setAnswers((prev) => ({ ...prev, [questionId]: value }));
+//    };
 
     const formatTime = (seconds) => {
         const minutes = Math.floor(seconds / 60);
@@ -293,7 +293,6 @@ export default function QuizApp() {
                                         const cleanOpt = opt.includes(": ")
                                             ? opt.split(": ")[1].trim()
                                             : opt.trim();
-                                        const inputElement = document.querySelector(`input[name="question-${q.id}"]`);
                                         console.log("Rendering Q", q.id, "option", opt, "with type", "radio");
                                         return (
                                             <div key={index} className="choice-item">

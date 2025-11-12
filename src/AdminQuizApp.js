@@ -79,7 +79,7 @@ export default function AdminQuizApp() {
         const method = editingQuizId ? "PUT" : "POST";
 
         try {
-            const response = await axios({
+            await axios({
                 method,
                 url,
                 data: quizData,
@@ -214,7 +214,9 @@ export default function AdminQuizApp() {
                 <ul className="quiz-list">
                     {quizzes.map(quiz => (
                         <li key={quiz.id}>
-                            <a
+                            <button
+                                type="button"
+                                className="quiz-link"
                                 onClick={() => {
                                     setShowQuizList(false);
                                     setSelectedQuizId(quiz.id);
@@ -222,7 +224,7 @@ export default function AdminQuizApp() {
                                 }}
                             >
                                 {`${quiz.id} - ${quiz.title} - ${new Date(quiz.created_at).toLocaleDateString()}`}
-                            </a>
+                            </button>
                         </li>
                     ))}
                 </ul>
@@ -322,7 +324,8 @@ export default function AdminQuizApp() {
                             value={q.correctAnswers.join(" | ")}
                             onChange={(e) => {
                                 // Always split on | and trim each answer
-                                const answersArr = e.target.value.split("|").map(ans => ans.trim()).filter(ans => ans.length > 0);
+                                const answersArr = e.target.value.split("|")
+                                .map(ans => ans.trim()).filter(ans => ans.length > 0);
                                 updateQuestion(qIndex, "correctAnswers", answersArr);
 
                             }}
