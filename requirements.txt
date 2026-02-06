@@ -10,4 +10,3 @@ qrcode==7.4.2
 pillow==10.4.0
 pytz==2024.2
 python-dotenv
-pydantic-core==2.23.4
